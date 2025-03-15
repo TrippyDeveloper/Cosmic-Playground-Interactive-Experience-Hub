@@ -4,23 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Playground | Interactive Experience Hub</title>
-    <!-- SEO and social sharing metadata -->
     <meta property="og:title" content="Cosmic Playground">
-    <meta property="og:description" content="Step Into Digital Realms Built by AI">
+    <meta property="og:description" content="Explore the digital universe of games, interactive experiences, and visual tools">
     <meta property="og:image" content="https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=cosmic%20playground%20logo%20with%20stars&w=1200&h=630&style=realistic">
     <meta property="og:type" content="website">
     <link rel="icon" href="https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=cosmic%20playground%20icon&w=32&h=32&transparent=true&style=pixel_art">
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Quicksand:wght@300;500&display=swap" rel="stylesheet">
-    <!-- Utility libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/chat/cdn/three.min.js"></script>
     <script src="/chat/cdn/papaparse.min.js"></script>
     <style>
-        /* 
-        * CSS Variables for consistent theming
-        * These make it easy to change the color scheme throughout the site
-        */
         :root {
             --primary-color: #ff00ff;
             --secondary-color: #00ffff;
@@ -31,7 +24,6 @@
             --glow-intensity: 5px;
         }
 
-        /* Base styles */
         * {
             margin: 0;
             padding: 0;
@@ -46,17 +38,15 @@
             min-height: 100vh;
         }
 
-        /* 3D background container */
         #canvas-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1; /* Place behind content */
+            z-index: -1;
         }
 
-        /* Interactive particle effect container */
         .cosmic-particles {
             position: fixed;
             top: 0;
@@ -75,14 +65,13 @@
             transition: opacity 0.3s ease;
         }
 
-        /* Header styles */
+        /* Header */
         header {
             text-align: center;
             padding: 3rem 1rem;
             position: relative;
         }
 
-        /* Glowing text effect with animation */
         .glow-text {
             font-family: 'Orbitron', sans-serif;
             font-size: 3.5rem;
@@ -102,7 +91,6 @@
             opacity: 0.8;
         }
 
-        /* Text glow animation */
         @keyframes text-flicker {
             0%, 100% { text-shadow: 0 0 var(--glow-intensity) var(--primary-color), 0 0 calc(var(--glow-intensity) * 2) var(--secondary-color); }
             25% { text-shadow: 0 0 var(--glow-intensity) var(--secondary-color), 0 0 calc(var(--glow-intensity) * 2) var(--tertiary-color); }
@@ -110,7 +98,7 @@
             75% { text-shadow: 0 0 var(--glow-intensity) var(--primary-color), 0 0 calc(var(--glow-intensity) * 2) var(--tertiary-color); }
         }
 
-        /* Main content container */
+        /* Directory Container */
         .directory-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -119,7 +107,7 @@
             z-index: 1;
         }
 
-        /* Category section styling */
+        /* Category Sections */
         .category-section {
             margin-bottom: 2rem;
             border-radius: 15px;
@@ -135,7 +123,6 @@
             box-shadow: 0 0 30px rgba(255, 0, 255, 0.4);
         }
 
-        /* Category header with gradient and shine effect */
         .category-header {
             display: flex;
             justify-content: space-between;
@@ -149,7 +136,6 @@
             overflow: hidden;
         }
 
-        /* Shine animation for category headers */
         .category-header::before {
             content: '';
             position: absolute;
@@ -175,7 +161,6 @@
             z-index: 1;
         }
 
-        /* Expand/collapse icon */
         .expand-icon {
             width: 20px;
             height: 20px;
@@ -207,12 +192,10 @@
             transform: translateX(-50%);
         }
 
-        /* Hide vertical line when expanded */
         .category-section.active .expand-icon::after {
             transform: translateX(-50%) scaleY(0);
         }
 
-        /* Category content grid layout */
         .category-content {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -225,14 +208,13 @@
             opacity: 0;
         }
 
-        /* Expanded category content */
         .category-section.active .category-content {
             max-height: 2000px;
             padding: 1.5rem;
             opacity: 1;
         }
 
-        /* Item card styling */
+        /* Item Cards */
         .item-card {
             background: var(--card-bg);
             border-radius: 10px;
@@ -244,7 +226,6 @@
             opacity: 0;
         }
 
-        /* Animation for cards when category is expanded */
         .category-section.active .item-card {
             transform: translateY(0);
             opacity: 1;
@@ -256,7 +237,6 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
         }
 
-        /* Item image with overlay effect */
         .item-image {
             height: 160px;
             background-image: var(--bg-image);
@@ -284,7 +264,6 @@
             opacity: 0.9;
         }
 
-        /* Card text styling */
         .item-card h3 {
             font-family: 'Orbitron', sans-serif;
             padding: 1rem 1rem 0.5rem;
@@ -297,7 +276,6 @@
             opacity: 0.8;
         }
 
-        /* Glowing button with shine effect */
         .glow-button {
             display: inline-block;
             margin: 0 1rem 1rem;
@@ -324,7 +302,6 @@
             box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
         }
 
-        /* Button shine animation */
         .glow-button::before {
             content: '';
             position: absolute;
@@ -343,16 +320,30 @@
             left: 100%;
         }
 
-        /* Footer styling */
+
+        /* Footer */
         footer {
             text-align: center;
             padding: 2rem 1rem;
-            background: transparent; /* Fully transparent footer */
+            background: transparent;
             position: relative;
             z-index: 1;
         }
 
-        /* Loading screen */
+        .footer-content a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            margin: 0 0.5rem;
+        }
+
+        .footer-content a:hover {
+            color: var(--primary-color);
+            text-shadow: 0 0 5px var(--primary-color);
+        }
+        
+
+        /* Loading Screen */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -386,7 +377,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Responsive design */
+        /* Responsive Design */
         @media (max-width: 768px) {
             .glow-text {
                 font-size: 2.5rem;
@@ -409,7 +400,6 @@
     </style>
 </head>
 <body>
-    <!-- Loading screen that appears while assets are loading -->
     <div class="loading-screen">
         <div class="loading-content">
             <div class="loading-spinner"></div>
@@ -417,249 +407,186 @@
         </div>
     </div>
 
-    <!-- Container for Three.js 3D background -->
     <div id="canvas-container"></div>
-    
-    <!-- Container for interactive particles that follow mouse/touch -->
     <div class="cosmic-particles"></div>
 
-    <!-- Main header -->
     <header>
         <h1 class="glow-text">COSMIC PLAYGROUND</h1>
-        <p class="subtitle">Step Into Digital Realms Built by AI</p>
+        <p class="subtitle">Explore the digital universe</p>
     </header>
 
-    <!-- Main content container -->
     <main class="directory-container">
-        <!-- GAMES CATEGORY -->
         <section class="category-section" id="games">
             <div class="category-header">
                 <h2>GAMES</h2>
                 <div class="expand-icon"></div>
             </div>
             <div class="category-content">
-                <!-- Game Item: Cosmic Tetris -->
                 <div class="item-card" data-type="retro" style="--delay: 1">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=retro%20tetris%20game%20with%20neon%20blocks%20in%20space&w=600&h=400&style=pixel_art')"></div>
                     <h3>Cosmic Tetris</h3>
                     <p>A psychedelic take on the classic block puzzle</p>
-                    <a href="games/cosmic-tetris.html" class="glow-button">PLAY</a>
+                    <a href="#" class="glow-button">PLAY</a>
                 </div>
-                
-                <!-- Game Item: Nebula Breaker -->
                 <div class="item-card" data-type="arcade" style="--delay: 2">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=arcade%20breakout%20game%20with%20cosmic%20theme&w=600&h=400&style=pixel_art')"></div>
                     <h3>Nebula Breaker</h3>
                     <p>Destroy cosmic barriers in this Breakout reimagining</p>
-                    <a href="games/nebula-breaker.html" class="glow-button">PLAY</a>
+                    <a href="#" class="glow-button">PLAY</a>
                 </div>
-                
-                <!-- Game Item: Celestial Echoes -->
                 <div class="item-card" data-type="adventure" style="--delay: 3">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=3d%20space%20adventure%20game%20with%20planets&w=600&h=400&style=realistic')"></div>
                     <h3>Celestial Echoes</h3>
                     <p>3D adventure-puzzle with AI-generated narrative</p>
-                    <a href="games/celestial-echoes.html" class="glow-button">PLAY</a>
+                    <a href="#" class="glow-button">PLAY</a>
                 </div>
             </div>
         </section>
 
-        <!-- INTERACTIVE CATEGORY -->
         <section class="category-section" id="interactive">
             <div class="category-header">
                 <h2>INTERACTIVE</h2>
                 <div class="expand-icon"></div>
             </div>
             <div class="category-content">
-                <!-- Interactive Item: Sonic Visualizer -->
                 <div class="item-card" data-type="music" style="--delay: 1">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=music%20visualizer%20with%20colorful%20waveforms&w=600&h=400&style=realistic')"></div>
                     <h3>Sonic Visualizer</h3>
                     <p>Interactive music visualization experience</p>
-                    <a href="interactive/sonic-visualizer.html" class="glow-button">EXPLORE</a>
+                    <a href="#" class="glow-button">EXPLORE</a>
                 </div>
-                
-                <!-- Interactive Item: Gravity Playground -->
                 <div class="item-card" data-type="physics" style="--delay: 2">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=physics%20simulation%20with%20gravity%20and%20particles&w=600&h=400&style=realistic')"></div>
                     <h3>Gravity Playground</h3>
                     <p>Manipulate physics in a cosmic environment</p>
-                    <a href="interactive/gravity-playground.html" class="glow-button">EXPLORE</a>
+                    <a href="#" class="glow-button">EXPLORE</a>
                 </div>
             </div>
         </section>
 
-        <!-- VISUALS CATEGORY -->
         <section class="category-section" id="visuals">
             <div class="category-header">
                 <h2>VISUALS</h2>
                 <div class="expand-icon"></div>
             </div>
             <div class="category-content">
-                <!-- Visual Item: Fractal Explorer -->
                 <div class="item-card" data-type="generator" style="--delay: 1">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=fractal%20patterns%20with%20infinite%20zoom&w=600&h=400&style=realistic')"></div>
                     <h3>Fractal Explorer</h3>
                     <p>Generate and explore infinite fractal patterns</p>
-                    <a href="visuals/fractal-explorer.html" class="glow-button">CREATE</a>
+                    <a href="#" class="glow-button">CREATE</a>
                 </div>
-                
-                <!-- Visual Item: Neon Canvas -->
                 <div class="item-card" data-type="art" style="--delay: 2">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=neon%20psychedelic%20art%20with%20glowing%20colors&w=600&h=400&style=realistic')"></div>
                     <h3>Neon Canvas</h3>
                     <p>Create glowing psychedelic artwork</p>
-                    <a href="visuals/neon-canvas.html" class="glow-button">CREATE</a>
+                    <a href="#" class="glow-button">CREATE</a>
                 </div>
             </div>
         </section>
 
-        <!-- SPACE CATEGORY -->
         <section class="category-section" id="space">
             <div class="category-header">
                 <h2>SPACE</h2>
                 <div class="expand-icon"></div>
             </div>
             <div class="category-content">
-                <!-- Space Item: Solar System Explorer -->
                 <div class="item-card" data-type="exploration" style="--delay: 1">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=3d%20solar%20system%20explorer%20with%20planets&w=600&h=400&style=realistic')"></div>
                     <h3>Solar System Explorer</h3>
                     <p>Navigate through an interactive 3D solar system</p>
-                    <a href="space/solar-system.html" class="glow-button">LAUNCH</a>
+                    <a href="#" class="glow-button">LAUNCH</a>
                 </div>
-                
-                <!-- Space Item: Stellar Genesis -->
                 <div class="item-card" data-type="simulation" style="--delay: 2">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=star%20formation%20and%20supernova%20simulation&w=600&h=400&style=realistic')"></div>
                     <h3>Stellar Genesis</h3>
                     <p>Watch the birth and death of stars</p>
-                    <a href="space/stellar-genesis.html" class="glow-button">LAUNCH</a>
+                    <a href="#" class="glow-button">LAUNCH</a>
                 </div>
             </div>
         </section>
 
-        <!-- OTHER CATEGORY -->
         <section class="category-section" id="other">
             <div class="category-header">
                 <h2>OTHER</h2>
                 <div class="expand-icon"></div>
             </div>
             <div class="category-content">
-                <!-- Other Item: Mind Mapper -->
                 <div class="item-card" data-type="tool" style="--delay: 1">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=mind%20mapping%20tool%20with%20connected%20nodes&w=600&h=400&style=realistic')"></div>
                     <h3>Mind Mapper</h3>
                     <p>Visual brainstorming and idea organization</p>
-                    <a href="other/mind-mapper.html" class="glow-button">OPEN</a>
+                    <a href="#" class="glow-button">OPEN</a>
                 </div>
-                
-                <!-- Other Item: Neural Playground -->
                 <div class="item-card" data-type="experimental" style="--delay: 2">
                     <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=neural%20network%20visualization%20with%20glowing%20connections&w=600&h=400&style=realistic')"></div>
                     <h3>Neural Playground</h3>
                     <p>Experiment with neural networks and AI</p>
-                    <a href="other/neural-playground.html" class="glow-button">OPEN</a>
+                    <a href="#" class="glow-button">OPEN</a>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Footer - kept empty but structure maintained for future content -->
-    <footer>
+     <footer>
         <div class="footer-content">
-            <!-- Footer content removed as requested -->
+            <p></p>
         </div>
     </footer>
 
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // =============================================
-            // INITIALIZATION
-            // =============================================
-            
-            // Reference to loading screen element
+            // Loading screen
             const loadingScreen = document.querySelector('.loading-screen');
             
-            // =============================================
-            // THREE.JS BACKGROUND SETUP
-            // =============================================
-            
-            // Initialize Three.js scene, camera and renderer
+            // Initialize Three.js scene
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             const renderer = new THREE.WebGLRenderer({ antialias: true });
             
-            // Configure renderer
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             document.getElementById('canvas-container').appendChild(renderer.domElement);
             
-            // =============================================
-            // STAR FIELD CREATION
-            // =============================================
-            
-            // Create star field with BufferGeometry for better performance
+            // Stars
             const starGeometry = new THREE.BufferGeometry();
-            const starCount = 10000; // Number of stars
+            const starCount = 10000;
+            const positions = new Float32Array(starCount * 3);
+            const velocities = new Float32Array(starCount);
+            const sizes = new Float32Array(starCount);
             
-            // Arrays to store star properties
-            const positions = new Float32Array(starCount * 3); // x, y, z positions
-            const velocities = new Float32Array(starCount);    // Movement speed
-            const sizes = new Float32Array(starCount);         // Star sizes
-            
-            // Initialize stars with random positions and properties
             for (let i = 0; i < starCount; i++) {
-                // Random positions in 3D space
-                positions[i * 3] = (Math.random() - 0.5) * 2000;     // x
-                positions[i * 3 + 1] = (Math.random() - 0.5) * 2000; // y
-                positions[i * 3 + 2] = (Math.random() - 0.5) * 2000; // z
-                
-                // Random velocity for parallax effect
+                positions[i * 3] = (Math.random() - 0.5) * 2000;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 2000;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 2000;
                 velocities[i] = Math.random() * 0.2 + 0.05;
-                
-                // Random size variation
                 sizes[i] = Math.random() * 2 + 0.5;
             }
             
-            // Add attributes to geometry
             starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             starGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 1));
             starGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
             
-            // Create material for stars
             const starMaterial = new THREE.PointsMaterial({
                 color: 0xffffff,
                 size: 1,
                 transparent: true,
                 opacity: 0.8,
                 vertexColors: false,
-                sizeAttenuation: true // Stars further away appear smaller
+                sizeAttenuation: true
             });
             
-            // Create star points and add to scene
             const stars = new THREE.Points(starGeometry, starMaterial);
             scene.add(stars);
             
-            // =============================================
-            // NEBULA CLOUD CREATION
-            // =============================================
-            
-            /**
-             * Creates a nebula cloud with specified properties
-             * @param {number} color - RGB color of the nebula
-             * @param {Object} position - x, y, z coordinates
-             * @param {number} size - radius of the nebula sphere
-             * @return {THREE.Mesh} - The created nebula object
-             */
+            // Nebula clouds
             function createNebula(color, position, size) {
                 const geometry = new THREE.SphereGeometry(size, 32, 32);
                 const material = new THREE.MeshBasicMaterial({
                     color: color,
                     transparent: true,
                     opacity: 0.05,
-                    blending: THREE.AdditiveBlending // Creates glowing effect
+                    blending: THREE.AdditiveBlending
                 });
                 const nebula = new THREE.Mesh(geometry, material);
                 nebula.position.set(position.x, position.y, position.z);
@@ -667,149 +594,56 @@
                 return nebula;
             }
             
-            // Create multiple nebula clouds with different colors and positions
             const nebulas = [
-                createNebula(0xff00ff, { x: 100, y: -50, z: -300 }, 150),  // Magenta
-                createNebula(0x00ffff, { x: -150, y: 100, z: -250 }, 120), // Cyan
-                createNebula(0xffff00, { x: 0, y: -100, z: -200 }, 100)    // Yellow
+                createNebula(0xff00ff, { x: 100, y: -50, z: -300 }, 150),
+                createNebula(0x00ffff, { x: -150, y: 100, z: -250 }, 120),
+                createNebula(0xffff00, { x: 0, y: -100, z: -200 }, 100)
             ];
             
-            // Position camera
+            // Camera position
             camera.position.z = 500;
             
-            // =============================================
-            // MOUSE INTERACTION SETUP
-            // =============================================
-            
-            // Variables for mouse-based parallax effect
+            // Mouse movement for parallax
             let mouseX = 0;
             let mouseY = 0;
             let targetX = 0;
             let targetY = 0;
             
-            // Track mouse position for parallax effect
             document.addEventListener('mousemove', function(event) {
                 mouseX = (event.clientX - window.innerWidth / 2) / 100;
                 mouseY = (event.clientY - window.innerHeight / 2) / 100;
             });
             
-            // =============================================
-            // INTERACTIVE PARTICLE SYSTEM
-            // =============================================
-            
+            // Cosmic particles
             const particlesContainer = document.querySelector('.cosmic-particles');
-            const maxParticles = 50; // Maximum number of particles to prevent performance issues
-            const particles = [];    // Array to track active particles
-             
-            // Audio preloading and management
-            const audioCache = {};
-            let audioEnabled = false;
-             
-            /**
-             * Safely removes a particle from the DOM and array
-             * @param {HTMLElement} particle - The particle element to remove
-             */
-            function safelyRemoveParticle(particle) {
-                try {
-                    // Check if particle is still in DOM and has a parent
-                    if (particle && particle.parentNode) {
-                        particle.parentNode.removeChild(particle);
-                    }
-                    
-                    // Remove from tracking array
-                    const index = particles.indexOf(particle);
-                    if (index > -1) {
-                        particles.splice(index, 1);
-                    }
-                } catch (err) {
-                    console.log("Error removing particle:", err);
-                }
-            }
-             
-            /**
-             * Preloads and plays audio with error handling
-             * @param {string} url - URL of the audio file
-             * @param {number} volume - Volume level (0-1)
-             */
-            function playSound(url, volume = 0.3) {
-                if (!audioEnabled) return;
-                
-                try {
-                    // Check if audio is already cached
-                    if (!audioCache[url]) {
-                        const audio = new Audio();
-                         
-                        // Error handling
-                        audio.addEventListener('error', (e) => {
-                            console.log(`Audio error: ${e.message || 'Unknown error'}`);
-                            // Mark this URL as problematic
-                            audioCache[url] = null;
-                        });
-                         
-                        // Set source after adding event listener
-                        audio.src = url;
-                        audio.volume = volume;
-                        audioCache[url] = audio;
-                    }
-                    
-                    // Only try to play if we have a valid audio object
-                    if (audioCache[url]) {
-                        const soundToPlay = audioCache[url].cloneNode();
-                        soundToPlay.volume = volume;
-                        
-                        // Use Promise with timeout for better error handling
-                        const playPromise = soundToPlay.play();
-                        
-                        if (playPromise !== undefined) {
-                            playPromise.catch(err => {
-                                console.log("Audio play error:", err.message || 'Unknown error');
-                                // If autoplay is blocked, we'll need user interaction
-                                audioEnabled = false;
-                            });
-                        }
-                    }
-                } catch (err) {
-                    console.log("Audio system error:", err.message || 'Unknown error');
-                    audioEnabled = false;
-                }
-            }
+            const maxParticles = 50;
+            const particles = [];
             
-            /**
-             * Creates a glowing particle at specified coordinates
-             * @param {number} x - X coordinate
-             * @param {number} y - Y coordinate
-             */
             function createCosmicParticle(x, y) {
-                // Remove oldest particle if at max capacity
                 if (particles.length >= maxParticles) {
                     const oldParticle = particles.shift();
-                    if (oldParticle) {
-                        oldParticle.style.opacity = 0;
-                        
-                        setTimeout(() => {
-                            safelyRemoveParticle(oldParticle);
-                        }, 300);
-                    }
+                    oldParticle.style.opacity = 0;
+                    setTimeout(() => {
+                        particlesContainer.removeChild(oldParticle);
+                    }, 300);
                 }
                 
-                // Create new particle element
                 const particle = document.createElement('div');
                 particle.className = 'particle';
                 
-                // Random properties for variety
+                // Random properties
                 const size = Math.random() * 15 + 5;
                 const duration = Math.random() * 3 + 2;
                 const colorType = Math.floor(Math.random() * 3);
                 
-                // Select random color from theme colors
                 let color;
                 switch (colorType) {
-                    case 0: color = 'rgba(255, 0, 255, 0.7)'; break; // Magenta
-                    case 1: color = 'rgba(0, 255, 255, 0.7)'; break;  // Cyan
-                    case 2: color = 'rgba(255, 255, 0, 0.7)'; break;  // Yellow
+                    case 0: color = 'rgba(255, 0, 255, 0.7)'; break;
+                    case 1: color = 'rgba(0, 255, 255, 0.7)'; break;
+                    case 2: color = 'rgba(255, 255, 0, 0.7)'; break;
                 }
                 
-                // Apply styles to particle
+                // Apply styles
                 particle.style.width = `${size}px`;
                 particle.style.height = `${size}px`;
                 particle.style.backgroundColor = color;
@@ -817,14 +651,13 @@
                 particle.style.left = `${x}px`;
                 particle.style.top = `${y}px`;
                 
-                // Set animation duration
+                // Animation
                 particle.style.transition = `transform ${duration}s ease-out, opacity ${duration}s ease-out`;
                 
-                // Add to DOM and track
                 particlesContainer.appendChild(particle);
                 particles.push(particle);
                 
-                // Start animation after a small delay (allows for proper rendering)
+                // Start animation after a small delay
                 setTimeout(() => {
                     particle.style.opacity = 0.7;
                     const angle = Math.random() * Math.PI * 2;
@@ -834,28 +667,32 @@
                     particle.style.transform = `translate(${translateX}px, ${translateY}px) scale(0)`;
                 }, 10);
                 
-                // Remove particle after animation completes
+                // Remove particle after animation
                 setTimeout(() => {
-                    if (particle) {
-                        particle.style.opacity = 0;
-                        setTimeout(() => {
-                            safelyRemoveParticle(particle);
-                        }, 300);
-                    }
+                    particle.style.opacity = 0;
+                    setTimeout(() => {
+                        if (particlesContainer.contains(particle)) {
+                            particlesContainer.removeChild(particle);
+                        }
+                        const index = particles.indexOf(particle);
+                        if (index > -1) {
+                            particles.splice(index, 1);
+                        }
+                    }, 300);
                 }, duration * 1000);
             }
             
-            // Create particles on mouse move with rate limiting
+            // Create particles on mouse move
             let lastParticleTime = 0;
             document.addEventListener('mousemove', function(event) {
                 const currentTime = Date.now();
-                if (currentTime - lastParticleTime > 50) { // Limit to 20 particles per second
+                if (currentTime - lastParticleTime > 50) { // Limit particle creation rate
                     createCosmicParticle(event.clientX, event.clientY);
                     lastParticleTime = currentTime;
                 }
             });
             
-            // Support for touch devices
+            // Create particles on touch move for mobile
             document.addEventListener('touchmove', function(event) {
                 const currentTime = Date.now();
                 if (currentTime - lastParticleTime > 50) {
@@ -865,22 +702,18 @@
                 }
             });
             
-            // =============================================
-            // ANIMATION LOOP
-            // =============================================
-            
+            // Animation loop
             function animate() {
                 requestAnimationFrame(animate);
                 
-                // Update star positions for movement effect
+                // Update stars
                 const positions = stars.geometry.attributes.position.array;
                 const velocities = stars.geometry.attributes.velocity.array;
                 
                 for (let i = 0; i < starCount; i++) {
-                    // Move stars along z-axis based on their velocity
                     positions[i * 3 + 2] += velocities[i];
                     
-                    // Reset star position when it goes too far (creates infinite starfield)
+                    // Reset star position when it goes too far
                     if (positions[i * 3 + 2] > 500) {
                         positions[i * 3] = (Math.random() - 0.5) * 2000;
                         positions[i * 3 + 1] = (Math.random() - 0.5) * 2000;
@@ -888,57 +721,44 @@
                     }
                 }
                 
-                // Mark position attribute for update
                 stars.geometry.attributes.position.needsUpdate = true;
                 
-                // Smooth camera movement for parallax effect
+                // Smooth camera movement
                 targetX = mouseX * 0.3;
                 targetY = mouseY * 0.3;
                 camera.position.x += (targetX - camera.position.x) * 0.05;
                 camera.position.y += (-targetY - camera.position.y) * 0.05;
                 camera.lookAt(scene.position);
                 
-                // Rotate nebula clouds for subtle movement
+                // Rotate nebulas
                 nebulas.forEach((nebula, i) => {
                     nebula.rotation.x += 0.001 * (i + 1);
                     nebula.rotation.y += 0.002 * (i + 1);
                 });
                 
-                // Render the scene
                 renderer.render(scene, camera);
             }
             
-            // =============================================
-            // WINDOW RESIZE HANDLER
-            // =============================================
-            
+            // Handle window resize
             window.addEventListener('resize', function() {
-                // Update camera aspect ratio
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
-                
-                // Update renderer size
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
             
-            // =============================================
-            // CATEGORY INTERACTION
-            // =============================================
-            
+            // Category expansion
             const categoryHeaders = document.querySelectorAll('.category-header');
             
             categoryHeaders.forEach(header => {
                 header.addEventListener('click', function() {
-                    // Toggle active state for the category
                     const section = this.parentElement;
                     section.classList.toggle('active');
                     
-                    // Create particle effect at header position when clicked
+                    // Create particles at the header position
                     const rect = this.getBoundingClientRect();
                     const centerX = rect.left + rect.width / 2;
                     const centerY = rect.top + rect.height / 2;
                     
-                    // Create multiple particles for a burst effect
                     for (let i = 0; i < 10; i++) {
                         setTimeout(() => {
                             createCosmicParticle(
@@ -948,7 +768,7 @@
                         }, i * 50);
                     }
                     
-                    // Add staggered delay to each card animation
+                    // Add delay to each card animation
                     if (section.classList.contains('active')) {
                         const cards = section.querySelectorAll('.item-card');
                         cards.forEach((card, index) => {
@@ -958,50 +778,21 @@
                 });
             });
             
-            // =============================================
-            // INITIALIZATION SEQUENCE
-            // =============================================
-            
-            // Enable audio on first user interaction
-            document.addEventListener('click', function enableAudio() {
-                audioEnabled = true;
-                document.removeEventListener('click', enableAudio);
-                
-                // Try to preload button sound after user interaction
-                try {
-                    const buttonSoundUrl = 'https://cdn.simulationtheory.ai/gasset/?asset=sound&prompt=sci-fi UI button click';
-                    const preloadAudio = new Audio();
-                    
-                    preloadAudio.addEventListener('canplaythrough', () => {
-                        console.log('Button sound preloaded');
-                    });
-                    
-                    preloadAudio.addEventListener('error', (e) => {
-                        console.log(`Audio preload error: ${e.message || 'Unknown error'}`);
-                    });
-                    
-                    preloadAudio.src = buttonSoundUrl;
-                    audioCache[buttonSoundUrl] = preloadAudio;
-                } catch (err) {
-                    console.log("Audio preload error:", err);
-                }
-            }, { once: true });
-            
             // Auto-open first category after loading
             setTimeout(() => {
                 document.querySelector('.category-section').classList.add('active');
                 
-                // Hide loading screen with fade out effect
+                // Hide loading screen
                 loadingScreen.style.opacity = 0;
                 setTimeout(() => {
                     loadingScreen.style.display = 'none';
                 }, 1000);
             }, 2000);
             
-            // Start animation loop
+            // Start animation
             animate();
             
-            // Create initial particles for visual interest
+            // Create initial particles
             for (let i = 0; i < 20; i++) {
                 setTimeout(() => {
                     createCosmicParticle(
@@ -1011,20 +802,18 @@
                 }, i * 100);
             }
             
-            // =============================================
-            // BUTTON INTERACTION
-            // =============================================
-            
-            // Add sound and particle effects to buttons
+            // Add sound effect to buttons
             const buttons = document.querySelectorAll('.glow-button');
-            const buttonSoundUrl = 'https://cdn.simulationtheory.ai/gasset/?asset=sound&prompt=sci-fi UI button click';
-            
             buttons.forEach(button => {
                 button.addEventListener('click', function(e) {
-                    // Play sound effect with error handling
-                    playSound(buttonSoundUrl, 0.3);
+                    e.preventDefault();
                     
-                    // Create particles at button position for visual feedback
+                    // Play sound effect
+                    const sound = new Audio('https://cdn.simulationtheory.ai/gasset/?asset=sound&prompt=sci-fi UI button click');
+                    sound.volume = 0.3;
+                    sound.play();
+                    
+                    // Create particles at button position
                     const rect = this.getBoundingClientRect();
                     for (let i = 0; i < 15; i++) {
                         setTimeout(() => {
@@ -1034,10 +823,15 @@
                             );
                         }, i * 30);
                     }
+                    
+                    // Simulate navigation (in a real app, you'd navigate to the actual page)
+                    setTimeout(() => {
+                        alert('This would navigate to: ' + this.textContent + ' experience');
+                    }, 500);
                 });
             });
         });
     </script>
-        
 </body>
 </html>
+        
