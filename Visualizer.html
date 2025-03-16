@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio-Reactive YouTube Visualizer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #9c27b0;
+        }
+
+        .input-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #youtube-url {
+            width: 60%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px 0 0 4px;
+            background-color: #2a2a2a;
+            color: #ffffff;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            background-color: #9c27b0;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #7b1fa2;
+        }
+
+        .visualization-container {
+            position: relative;
+            width: 100%;
+            height: 70vh;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #000000;
+        }
+
+        #video-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        #visualization-canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #visualization-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-section, .visual-options {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 5px;
+            color: #bb86fc;
+        }
+
+        select, input[type="range"] {
+            background-color: #2a2a2a;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            margin-right: 15px;
+        }
+
+        .visual-options {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* Developer Tools Styles */
+        .dev-tools {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #bb86fc;
+            display: none;
+        }
+
+        .dev-tools.active {
+            display: block;
+        }
+
+        .dev-tools h3 {
+            color: #bb86fc;
+            margin-top: 0;
+        }
+
+        .frequency-display {
+            width: 100%;
+            height: 150px;
+            background-color: #000;
+            margin-top: 10px;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .eq-bar {
+            flex: 1;
+            background: linear-gradient(to top, #4CAF50, #FFEB3B, #F44336);
+            margin: 0 1px;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.2s ease;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .input-section {
+                flex-direction: column;
+            }
+            
+            #youtube-url {
+                width: 100%;
+                border-radius: 4px;
+                margin-bottom: 10px;
+            }
+            
+            button {
+                width: 100%;
+                border-radius: 4px;
+            }
+            
+            .visual-options {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            select, input[type="range"] {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Home Button -->
+        <a href="index.html" class="lsd-home-button">
+            <svg viewBox="0 0 64 64" class="home-icon" xmlns="http://www.w3.org/2000/svg">
+                <path d="M32 12l22 22h-6v18h-12v-12h-8v12h-12v-18h-6z"/>
+            </svg>
+        </a>
+
+        <h1>Audio-Reactive YouTube Visualizer</h1>
+        
+        <div class="input-section">
+            <input type="text" id="youtube-url" placeholder="Enter YouTube URL..." value="https://youtu.be/n6a9ymd6y-M?si=Ck5UyVvx_d55jS5m">
+            <button id="load-video">Load Video</button>
+        </div>
+        
+        <div class="visualization-container">
+            <div id="video-container">
+                <!-- YouTube iframe will be inserted here -->
+            </div>
+            
+            <div id="visualization-canvas-container">
+                <canvas id="visualization-canvas"></canvas>
+            </div>
+            
+            <div id="status-indicator" class="status-indicator">
+                Paused
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="toggle-section">
+                <label for="display-toggle">Display Mode:</label>
+                <select id="display-toggle">
+                    <option value="both">Video + Visuals</option>
+                    <option value="visuals-only">Visuals Only</option>
+                </select>
+            </div>
+            
+            <div class="visual-options">
+                <label for="visual-type">Visual Type:</label>
+                <select id="visual-type">
+                    <option value="gentle-wave">Gentle Wave</option>
+                    <option value="smooth-bars">Smooth Bars</option>
+                    <option value="circular-spectrum">Circular Spectrum</option>
+                    <option value="flowing-gradient">Flowing Gradient</option>
+                </select>
+                
+                <label for="color-theme">Color Theme:</label>
+                <select id="color-theme">
+                    <option value="soft">Soft Pastels</option>
+                    <option value="calm">Calm Blues</option>
+                    <option value="warm">Warm Sunset</option>
+                    <option value="monochrome">Monochrome</option>
+                </select>
+                
+                <label for="sensitivity">Sensitivity:</label>
+                <input type="range" id="sensitivity" min="0" max="100" value="30">
+                <span id="sensitivity-value">30%</span>
+            </div>
+        </div>
+        
+        <!-- Developer Tools Button -->
+        <button id="dev-tools-toggle">Show Developer Tools</button>
+        
+        <!-- Developer Tools Section -->
+        <div id="dev-tools" class="dev-tools">
+            <h3>Audio Analysis</h3>
+            
+            <div>
+                <h4>Frequency Spectrum</h4>
+                <div id="frequency-display" class="frequency-display">
+                    <!-- EQ bars will be generated here -->
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px; color: #aaa; font-size: 12px;">
+                    <span>20Hz</span>
+                    <span>100Hz</span>
+                    <span>500Hz</span>
+                    <span>1kHz</span>
+                    <span>5kHz</span>
+                    <span>10kHz</span>
+                    <span>20kHz</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h4>Audio Stats</h4>
+                <div id="audio-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <p>Bass: <span id="bass-level">0%</span></p>
+                        <div style="width: 100%; height: 10px; background-color: #333; border-radius: 5px;">
+                            <div id="bass-meter" style="height: 100%; width: 0%; background-color: #f44336; border-radius: 5px;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>Mid: <span id="mid-level">0%</span></p>
+                        <div style="width: 100%; height: 10px; background-color: #333; border-radius: 5px;">
+                            <div id="mid-meter" style="height: 100%; width: 0%; background-color: #4CAF50; border-radius: 5px;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>Treble: <span id="treble-level">0%</span></p>
+                        <div style="width: 100%; height: 10px; background-color: #333; border-radius: 5px;">
+                            <div id="treble-meter" style="height: 100%; width: 0%; background-color: #2196F3; border-radius: 5px;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>Overall: <span id="overall-level">0%</span></p>
+                        <div style="width: 100%; height: 10px; background-color: #333; border-radius: 5px;">
+                            <div id="overall-meter" style="height: 100%; width: 0%; background-color: #9c27b0; border-radius: 5px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // AudioAnalyzer class - with smoother transitions
+        class AudioAnalyzer {
+            constructor(audioContext) {
+                this.audioContext = audioContext;
+                this.analyser = this.audioContext.createAnalyser();
+                this.analyser.fftSize = 2048;
+                this.bufferLength = this.analyser.frequencyBinCount;
+                this.dataArray = new Uint8Array(this.bufferLength);
+                
+                // For frequency bands
+                this.bassData = new Uint8Array(this.bufferLength);
+                this.midData = new Uint8Array(this.bufferLength);
+                this.trebleData = new Uint8Array(this.bufferLength);
+                
+                // For smoothing
+                this.smoothingFactor = 0.8; // Higher = more smoothing
+                this.lastValues = {
+                    frequency: new Array(this.bufferLength).fill(0),
+                    bass: 0,
+                    mid: 0,
+                    treble: 0,
+                    overall: 0
+                };
+                
+                // For EQ display
+                this.eqBands = 32;
+                this.eqData = new Array(this.eqBands).fill(0);
+                
+                // Create filters for different frequency ranges
+                this.setupFilters();
+                
+                // Pause state
+                this.isPaused = false;
+                
+                // For lo-fi beat simulation
+                this.beatInterval = 500; // 120 BPM
+                this.lastBeatTime = 0;
+            }
+            
+            setupFilters() {
+                // Bass filter (20Hz - 250Hz)
+                this.bassFilter = this.audioContext.createBiquadFilter();
+                this.bassFilter.type = "lowpass";
+                this.bassFilter.frequency.value = 250;
+                
+                // Mid filter (250Hz - 2000Hz)
+                this.midFilter = this.audioContext.createBiquadFilter();
+                this.midFilter.type = "bandpass";
+                this.midFilter.frequency.value = 1000;
+                this.midFilter.Q.value = 0.5;
+                
+                // Treble filter (2000Hz - 20000Hz)
+                this.trebleFilter = this.audioContext.createBiquadFilter();
+                this.trebleFilter.type = "highpass";
+                this.trebleFilter.frequency.value = 2000;
+            }
+            
+            connectToYouTubePlayer(player) {
+                // For demo purposes, we'll simulate audio data
+                // In a real implementation, you would need to capture audio from the YouTube iframe
+                
+                // Start a timer to simulate audio data
+                this.simulationInterval = setInterval(() => {
+                    if (this.isPaused) return;
+                    
+                    // Generate data based on the video we're using (lo-fi beats)
+                    this.generateLoFiData();
+                    
+                    // Update EQ display data
+                    this.updateEqData();
+                }, 50); // Update at 20fps
+            }
+            
+            generateLoFiData() {
+                const now = Date.now();
+                
+                // Create a gentle beat pattern
+                const beatPhase = (now % this.beatInterval) / this.beatInterval;
+                const onBeat = beatPhase < 0.1; // Beat is active for 10% of the interval
+                
+                if (onBeat && now - this.lastBeatTime > this.beatInterval * 0.8) {
+                    this.lastBeatTime = now;
+                }
+                
+                // Calculate beat intensity (decays over time)
+                const timeSinceBeat = now - this.lastBeatTime;
+                const beatIntensity = Math.max(0, 1 - timeSinceBeat / (this.beatInterval * 0.5));
+                
+                // Generate smooth frequency data
+                for (let i = 0; i < this.bufferLength; i++) {
+                    // Calculate frequency for this bin
+                    const frequency = i * (this.audioContext.sampleRate / 2) / this.bufferLength;
+                    
+                    // Base value with some noise
+                    let value = 20 + Math.random() * 10;
+                    
+                    // Add frequency-dependent components
+                    if (frequency < 250) { // Bass
+                        // Bass drum hits
+                        if (beatIntensity > 0) {
+                            value += 100 * beatIntensity * (1 - frequency / 250);
+                        }
+                        // Continuous bass
+                        value += 30 * (1 - frequency / 250) * (0.5 + 0.5 * Math.sin(now / 1000));
+                    } 
+                    else if (frequency < 2000) { // Mid
+                        // Melodic elements
+                        value += 40 * Math.sin(frequency / 100 + now / 2000) * Math.sin(now / 3000);
+                        // Occasional mid hits
+                        if (Math.sin(now / 1200) > 0.7) {
+                            value += 30 * Math.sin(frequency / 500);
+                        }
+                    } 
+                    else { // Treble
+                        // Hi-hats and cymbals
+                        if (now % (this.beatInterval / 2) < 50) {
+                            value += 50 * Math.exp(-(frequency - 8000) * (frequency - 8000) / 10000000);
+                        }
+                        // Ambient high frequencies
+                        value += 20 * Math.sin(frequency / 1000 + now / 1000);
+                    }
+                    
+                    // Apply smoothing
+                    this.lastValues.frequency[i] = this.lastValues.frequency[i] * this.smoothingFactor + 
+                                                 value * (1 - this.smoothingFactor);
+                    
+                    // Store in data arrays
+                    this.dataArray[i] = this.lastValues.frequency[i];
+                    
+                    // Distribute to frequency bands
+                    if (frequency < 250) {
+                        this.bassData[i] = this.lastValues.frequency[i];
+                    } else if (frequency < 2000) {
+                        this.midData[i] = this.lastValues.frequency[i];
+                    } else {
+                        this.trebleData[i] = this.lastValues.frequency[i];
+                    }
+                }
+            }
+            
+            updateEqData() {
+                // Create EQ band data from frequency data
+                for (let i = 0; i < this.eqBands; i++) {
+                    // Each EQ band represents a frequency range
+                    const startIndex = Math.floor(i * this.bufferLength / this.eqBands);
+                    const endIndex = Math.floor((i + 1) * this.bufferLength / this.eqBands);
+                    
+                    // Calculate average value for this band
+                    let sum = 0;
+                    for (let j = startIndex; j < endIndex; j++) {
+                        sum += this.dataArray[j];
+                    }
+                    const value = sum / (endIndex - startIndex);
+                    
+                    // Apply smoothing
+                    this.eqData[i] = this.eqData[i] * this.smoothingFactor + value * (1 - this.smoothingFactor);
+                }
+            }
+            
+            setPaused(isPaused) {
+                this.isPaused = isPaused;
+            }
+            
+            getFrequencyData() {
+                return this.dataArray;
+            }
+            
+            getBassData() {
+                return this.bassData;
+            }
+            
+            getMidData() {
+                return this.midData;
+            }
+            
+            getTrebleData() {
+                return this.trebleData;
+            }
+            
+            getEqData() {
+                return this.eqData;
+            }
+            
+            getAverageFrequency() {
+                const data = this.getFrequencyData();
+                let sum = 0;
+                let count = 0;
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i] > 0) {
+                        sum += data[i];
+                        count++;
+                    }
+                }
+                const raw = count > 0 ? sum / count : 0;
+                
+                // Apply smoothing
+                this.lastValues.overall = this.lastValues.overall * this.smoothingFactor + 
+                                         raw * (1 - this.smoothingFactor);
+                
+                return this.lastValues.overall;
+            }
+            
+            getAverageBass() {
+                const data = this.getBassData();
+                let sum = 0;
+                let count = 0;
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i] > 0) {
+                        sum += data[i];
+                        count++;
+                    }
+                }
+                const raw = count > 0 ? sum / count : 0;
+                
+                // Apply smoothing
+                this.lastValues.bass = this.lastValues.bass * this.smoothingFactor + 
+                                      raw * (1 - this.smoothingFactor);
+                
+                return this.lastValues.bass;
+            }
+            
+            getAverageMid() {
+                const data = this.getMidData();
+                let sum = 0;
+                let count = 0;
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i] > 0) {
+                        sum += data[i];
+                        count++;
+                    }
+                }
+                const raw = count > 0 ? sum / count : 0;
+                
+                // Apply smoothing
+                this.lastValues.mid = this.lastValues.mid * this.smoothingFactor + 
+                                     raw * (1 - this.smoothingFactor);
+                
+                return this.lastValues.mid;
+            }
+            
+            getAverageTreble() {
+                const data = this.getTrebleData();
+                let sum = 0;
+                let count = 0;
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i] > 0) {
+                        sum += data[i];
+                        count++;
+                    }
+                }
+                const raw = count > 0 ? sum / count : 0;
+                
+                // Apply smoothing
+                this.lastValues.treble = this.lastValues.treble * this.smoothingFactor + 
+                                        raw * (1 - this.smoothingFactor);
+                
+                return this.lastValues.treble;
+            }
+        }
+
+        // Visualizer class - with gentler, smoother visuals
+        class Visualizer {
+            constructor(canvas, audioAnalyzer) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.audioAnalyzer = audioAnalyzer;
+                this.settings = {
+                    type: 'gentle-wave',
+                    colorTheme: 'soft',
+                    sensitivity: 0.3
+                };
+                
+                this.resize();
+                this.setupColorThemes();
+                
+                // For smooth transitions
+                this.transitionSpeed = 0.05;
+                this.currentValues = {
+                    bass: 0,
+                    mid: 0,
+                    treble: 0
+                };
+                
+                // For wave visualization
+                this.wavePoints = [];
+                this.waveHistory = [];
+                
+                // For flowing gradient
+                this.gradientOffset = 0;
+                
+                // Animation state
+                this.isPaused = false;
+            }
+            
+            resize() {
+                const container = this.canvas.parentElement;
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+                
+                // Reset wave points when resizing
+                this.initWavePoints();
+            }
+            
+            initWavePoints() {
+                // Initialize wave points
+                this.wavePoints = [];
+                for (let i = 0; i <= this.canvas.width; i += 5) {
+                    this.wavePoints.push({
+                        x: i,
+                        y: this.canvas.height / 2,
+                        originalY: this.canvas.height / 2
+                    });
+                }
+                
+                // Initialize wave history
+                this.waveHistory = [];
+                for (let i = 0; i < 5; i++) {
+                    this.waveHistory.push([...this.wavePoints]);
+                }
+            }
+            
+            setupColorThemes() {
+                this.colorThemes = {
+                    soft: {
+                        background: 'rgb(25, 25, 35)',
+                        gradient: this.ctx.createLinearGradient(0, 0, this.canvas.width, 0),
+                        getColor: (value, index, total) => {
+                            const hue = 180 + (index / total) * 180;
+                            return `hsla(${hue}, 80%, ${60 + value * 20}%, ${0.5 + value * 0.5})`;
+                        }
+                    },
+                    calm: {
+                        background: 'rgb(15, 25, 40)',
+                        gradient: this.ctx.createLinearGradient(0, 0, this.canvas.width, 0),
+                        getColor: (value, index, total) => {
+                            const hue = 200 + (index / total) * 60;
+                            return `hsla(${hue}, 70%, ${50 + value * 20}%, ${0.5 + value * 0.5})`;
+                        }
+                    },
+                    warm: {
+                        background: 'rgb(35, 20, 20)',
+                        gradient: this.ctx.createLinearGradient(0, 0, this.canvas.width, 0),
+                        getColor: (value, index, total) => {
+                            const hue = 0 + (index / total) * 60;
+                            return `hsla(${hue}, 80%, ${50 + value * 20}%, ${0.5 + value * 0.5})`;
+                        }
+                    },
+                    monochrome: {
+                        background: 'rgb(15, 15, 15)',
+                        gradient: this.ctx.createLinearGradient(0, 0, this.canvas.width, 0),
+                        getColor: (value, index, total) => {
+                            return `rgba(255, 255, 255, ${0.2 + value * 0.6})`;
+                        }
+                    }
+                };
+                
+                // Set up gradients
+                Object.keys(this.colorThemes).forEach(theme => {
+                    const gradient = this.colorThemes[theme].gradient;
+                    if (theme === 'soft') {
+                        gradient.addColorStop(0, 'rgba(100, 200, 255, 0.5)');
+                        gradient.addColorStop(0.5, 'rgba(150, 100, 255, 0.5)');
+                        gradient.addColorStop(1, 'rgba(100, 200, 255, 0.5)');
+                    } else if (theme === 'calm') {
+                        gradient.addColorStop(0, 'rgba(50, 100, 200, 0.5)');
+                        gradient.addColorStop(0.5, 'rgba(70, 150, 230, 0.5)');
+                        gradient.addColorStop(1, 'rgba(50, 100, 200, 0.5)');
+                    } else if (theme === 'warm') {
+                        gradient.addColorStop(0, 'rgba(255, 100, 50, 0.5)');
+                        gradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.5)');
+                        gradient.addColorStop(1, 'rgba(255, 100, 50, 0.5)');
+                    } else {
+                        gradient.addColorStop(0, 'rgba(150, 150, 150, 0.5)');
+                        gradient.addColorStop(0.5, 'rgba(200, 200, 200, 0.5)');
+                        gradient.addColorStop(1, 'rgba(150, 150, 150, 0.5)');
+                    }
+                });
+            }
+            
+            updateSettings(newSettings) {
+                this.settings = { ...this.settings, ...newSettings };
+                
+                // Update gradients when theme changes
+                if (newSettings.colorTheme) {
+                    this.setupColorThemes();
+                }
+            }
+            
+            setPaused(isPaused) {
+                this.isPaused = isPaused;
+            }
+            
+            draw() {
+                if (this.isPaused) return;
+                
+                // Get audio data
+                const bassValue = this.audioAnalyzer.getAverageBass() / 255;
+                const midValue = this.audioAnalyzer.getAverageMid() / 255;
+                const trebleValue = this.audioAnalyzer.getAverageTreble() / 255;
+                
+                // Smooth transitions
+                this.currentValues.bass += (bassValue - this.currentValues.bass) * this.transitionSpeed;
+                this.currentValues.mid += (midValue - this.currentValues.mid) * this.transitionSpeed;
+                this.currentValues.treble += (trebleValue - this.currentValues.treble) * this.transitionSpeed;
+                
+                // Clear the canvas with theme background
+                this.ctx.fillStyle = this.colorThemes[this.settings.colorTheme].background;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Choose visualization type based on settings
+                switch (this.settings.type) {
+                    case 'gentle-wave':
+                        this.drawGentleWave();
+                        break;
+                    case 'smooth-bars':
+                        this.drawSmoothBars();
+                        break;
+                    case 'circular-spectrum':
+                        this.drawCircularSpectrum();
+                        break;
+                    case 'flowing-gradient':
+                        this.drawFlowingGradient();
+                        break;
+                    default:
+                        this.drawGentleWave();
+                }
+            }
+            
+            drawGentleWave() {
+                // Initialize wave points if needed
+                if (this.wavePoints.length === 0) {
+                    this.initWavePoints();
+                }
+                
+                const frequencyData = this.audioAnalyzer.getFrequencyData();
+                const centerY = this.canvas.height / 2;
+                const colors = this.colorThemes[this.settings.colorTheme];
+                
+                // Update wave points based on audio
+                for (let i = 0; i < this.wavePoints.length; i++) {
+                    const point = this.wavePoints[i];
+                    const x = point.x;
+                    
+                    // Get frequency data for this x position
+                    const frequencyIndex = Math.floor((x / this.canvas.width) * frequencyData.length);
+                    const frequencyValue = frequencyData[frequencyIndex] / 255;
+                    
+                    // Calculate new y position
+                    const time = Date.now() / 1000;
+                    const wave1 = Math.sin(x / 200 + time) * 20 * this.currentValues.mid;
+                    const wave2 = Math.sin(x / 100 - time * 0.5) * 15 * this.currentValues.treble;
+                    const wave3 = Math.sin(x / 400 + time * 0.2) * 25 * this.currentValues.bass;
+                    
+                    // Combine waves with frequency data
+                    const targetY = centerY + wave1 + wave2 + wave3 + 
+                                   (frequencyValue * this.settings.sensitivity * 100);
+                    
+                    // Smooth transition to target
+                    point.y += (targetY - point.y) * 0.1;
+                }
+                
+                // Add current wave to history
+                this.waveHistory.unshift([...this.wavePoints.map(p => ({...p}))]);
+                if (this.waveHistory.length > 5) {
+                    this.waveHistory.pop();
+                }
+                
+                // Draw wave layers
+                for (let layer = this.waveHistory.length - 1; layer >= 0; layer--) {
+                    const wave = this.waveHistory[layer];
+                    const alpha = 1 - layer / this.waveHistory.length;
+                    
+                    // Draw filled area
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, this.canvas.height);
+                    
+                    for (let i = 0; i < wave.length; i++) {
+                        const point = wave[i];
+                        if (i === 0) {
+                            this.ctx.lineTo(point.x, point.y);
+                        } else {
+                            // Use quadratic curves for smoother lines
+                            const prevPoint = wave[i - 1];
+                            const cpX = (prevPoint.x + point.x) / 2;
+                            this.ctx.quadraticCurveTo(cpX, prevPoint.y, point.x, point.y);
+                        }
+                    }
+                    
+                    this.ctx.lineTo(this.canvas.width, this.canvas.height);
+                    this.ctx.closePath();
+                    
+                    // Fill with gradient
+                    const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                    gradient.addColorStop(0, colors.getColor(this.currentValues.treble, 0, 1));
+                    gradient.addColorStop(0.5, colors.getColor(this.currentValues.mid, 0.5, 1));
+                    gradient.addColorStop(1, colors.getColor(this.currentValues.bass, 1, 1));
+                    
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.globalAlpha = alpha * 0.7;
+                    this.ctx.fill();
+                    this.ctx.globalAlpha = 1.0;
+                    
+                    // Draw line on top
+                    this.ctx.beginPath();
+                    
+                    for (let i = 0; i < wave.length; i++) {
+                        const point = wave[i];
+                        if (i === 0) {
+                            this.ctx.moveTo(point.x, point.y);
+                        } else {
+                            // Use quadratic curves for smoother lines
+                            const prevPoint = wave[i - 1];
+                            const cpX = (prevPoint.x + point.x) / 2;
+                            this.ctx.quadraticCurveTo(cpX, prevPoint.y, point.x, point.y);
+                        }
+                    }
+                    
+                    this.ctx.strokeStyle = colors.getColor(0.8, layer, this.waveHistory.length);
+                    this.ctx.lineWidth = 2;
+                    this.ctx.globalAlpha = alpha;
+                    this.ctx.stroke();
+                    this.ctx.globalAlpha = 1.0;
+                }
+            }
+            
+            drawSmoothBars() {
+                const eqData = this.audioAnalyzer.getEqData();
+                const barWidth = this.canvas.width / eqData.length;
+                const colors = this.colorThemes[this.settings.colorTheme];
+                
+                // Draw each bar
+                for (let i = 0; i < eqData.length; i++) {
+                    const value = (eqData[i] / 255) * this.settings.sensitivity;
+                    const barHeight = value * this.canvas.height * 0.8;
+                    
+                    // Get color based on frequency range
+                    let color;
+                    if (i < eqData.length * 0.33) {
+                        color = colors.getColor(this.currentValues.bass, i, eqData.length);
+                    } else if (i < eqData.length * 0.66) {
+                        color = colors.getColor(this.currentValues.mid, i, eqData.length);
+                    } else {
+                        color = colors.getColor(this.currentValues.treble, i, eqData.length);
+                    }
+                    
+                    // Draw bar with rounded corners
+                    const x = i * barWidth;
+                    const y = this.canvas.height - barHeight;
+                    const width = barWidth * 0.8;
+                    const radius = width / 2;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x + radius, y);
+                    this.ctx.lineTo(x + width - radius, y);
+                    this.ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                    this.ctx.lineTo(x + width, this.canvas.height - radius);
+                    this.ctx.quadraticCurveTo(x + width, this.canvas.height, x + width - radius, this.canvas.height);
+                    this.ctx.lineTo(x + radius, this.canvas.height);
+                    this.ctx.quadraticCurveTo(x, this.canvas.height, x, this.canvas.height - radius);
+                    this.ctx.lineTo(x, y + radius);
+                    this.ctx.quadraticCurveTo(x, y, x + radius, y);
+                    this.ctx.closePath();
+                    
+                    // Fill with gradient
+                    const gradient = this.ctx.createLinearGradient(x, y, x, this.canvas.height);
+                    gradient.addColorStop(0, color);
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
+                    
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fill();
+                    
+                    // Add subtle glow
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = color;
+                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.stroke();
+                    this.ctx.shadowBlur = 0;
+                }
+            }
+            
+            drawCircularSpectrum() {
+                const frequencyData = this.audioAnalyzer.getFrequencyData();
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                const maxRadius = Math.min(centerX, centerY) * 0.8;
+                const colors = this.colorThemes[this.settings.colorTheme];
+                
+                // Draw bass circle
+                const bassRadius = maxRadius * (0.2 + this.currentValues.bass * 0.3);
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, bassRadius, 0, Math.PI * 2);
+                this.ctx.fillStyle = colors.getColor(this.currentValues.bass, 0, 3);
+                this.ctx.fill();
+                
+                // Draw mid circle
+                const midRadius = maxRadius * (0.4 + this.currentValues.mid * 0.2);
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, midRadius, 0, Math.PI * 2);
+                this.ctx.strokeStyle = colors.getColor(this.currentValues.mid, 1, 3);
+                this.ctx.lineWidth = 2 + this.currentValues.mid * 5;
+                this.ctx.stroke();
+                
+                // Draw frequency spectrum around the circle
+                this.ctx.beginPath();
+                
+                const step = Math.ceil(frequencyData.length / 180);
+                for (let i = 0; i < 180; i++) {
+                    const freqIndex = i * step;
+                    const value = (frequencyData[freqIndex] / 255) * this.settings.sensitivity;
+                    
+                    const angle = (i / 180) * Math.PI * 2;
+                    const radius = maxRadius * (0.6 + value * 0.3);
+                    
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+                    
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        // Use quadratic curves for smoother lines
+                        const prevAngle = ((i - 1) / 180) * Math.PI * 2;
+                        const prevValue = (frequencyData[(i - 1) * step] / 255) * this.settings.sensitivity;
+                        const prevRadius = maxRadius * (0.6 + prevValue * 0.3);
+                        
+                        const prevX = centerX + Math.cos(prevAngle) * prevRadius;
+                        const prevY = centerY + Math.sin(prevAngle) * prevRadius;
+                        
+                        const cpAngle = ((i - 0.5) / 180) * Math.PI * 2;
+                        const cpRadius = maxRadius * (0.6 + ((prevValue + value) / 2) * 0.3);
+                        
+                        const cpX = centerX + Math.cos(cpAngle) * cpRadius;
+                        const cpY = centerY + Math.sin(cpAngle) * cpRadius;
+                        
+                        this.ctx.quadraticCurveTo(cpX, cpY, x, y);
+                    }
+                }
+                
+                this.ctx.closePath();
+                
+                // Create gradient fill
+                const gradient = this.ctx.createRadialGradient(
+                    centerX, centerY, maxRadius * 0.6,
+                    centerX, centerY, maxRadius * 0.9
+                );
+                
+                gradient.addColorStop(0, colors.getColor(this.currentValues.mid, 0, 1));
+                gradient.addColorStop(1, colors.getColor(this.currentValues.treble, 1, 1));
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.fill();
+                this.ctx.globalAlpha = 1.0;
+                
+                this.ctx.strokeStyle = colors.getColor(this.currentValues.treble, 2, 3);
+                this.ctx.lineWidth = 1 + this.currentValues.treble * 2;
+                this.ctx.stroke();
+            }
+            
+            drawFlowingGradient() {
+                const frequencyData = this.audioAnalyzer.getFrequencyData();
+                const colors = this.colorThemes[this.settings.colorTheme];
+                
+                // Update gradient offset based on bass
+                this.gradientOffset += 0.002 + this.currentValues.bass * 0.01;
+                if (this.gradientOffset > 1) this.gradientOffset -= 1;
+                
+                // Create flowing gradient background
+                const gradient = this.ctx.createLinearGradient(
+                    0, 0,
+                    this.canvas.width, this.canvas.height
+                );
+                
+                gradient.addColorStop(0, colors.getColor(this.currentValues.bass, 0, 3));
+                gradient.addColorStop(0.3 + this.gradientOffset * 0.4, colors.getColor(this.currentValues.mid, 1, 3));
+                gradient.addColorStop(1, colors.getColor(this.currentValues.treble, 2, 3));
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw flowing wave lines
+                const centerY = this.canvas.height / 2;
+                const numLines = 5;
+                
+                for (let line = 0; line < numLines; line++) {
+                    const lineOffset = line / numLines;
+                    const amplitude = 50 * this.settings.sensitivity * (1 - lineOffset * 0.5);
+                    
+                    this.ctx.beginPath();
+                    
+                    for (let x = 0; x <= this.canvas.width; x += 5) {
+                        const progress = x / this.canvas.width;
+                        
+                        // Get frequency data for this position
+                        const freqIndex = Math.floor(progress * frequencyData.length);
+                        const freqValue = frequencyData[freqIndex] / 255;
+                        
+                        // Create wave pattern
+                        const time = Date.now() / 1000;
+                        const wave1 = Math.sin(x / 200 + time + lineOffset * Math.PI * 2) * amplitude * this.currentValues.mid;
+                        const wave2 = Math.sin(x / 100 - time * 0.5 + lineOffset * Math.PI) * amplitude * 0.5 * this.currentValues.treble;
+                        const wave3 = Math.sin(x / 400 + time * 0.2 - lineOffset * Math.PI * 4) * amplitude * 1.5 * this.currentValues.bass;
+                        
+                        // Combine waves with frequency data
+                        const y = centerY + wave1 + wave2 + wave3 + (freqValue * amplitude);
+                        
+                        if (x === 0) {
+                            this.ctx.moveTo(x, y);
+                        } else {
+                            this.ctx.lineTo(x, y);
+                        }
+                    }
+                    
+                    this.ctx.strokeStyle = colors.getColor(1 - lineOffset, line, numLines);
+                    this.ctx.lineWidth = 3 - lineOffset * 2;
+                    this.ctx.globalAlpha = 0.7 - lineOffset * 0.5;
+                    this.ctx.stroke();
+                    this.ctx.globalAlpha = 1.0;
+                }
+            }
+        }
+
+        // Global variables
+        let player;
+        let audioContext;
+        let analyzer;
+        let visualizer;
+        let videoId = null;
+        let eqBars = [];
+        const NUM_EQ_BARS = 32;
+
+        // Initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up event listeners
+            document.getElementById('load-video').addEventListener('click', loadVideo);
+            document.getElementById('display-toggle').addEventListener('change', updateDisplayMode);
+            document.getElementById('visual-type').addEventListener('change', updateVisualizerSettings);
+            document.getElementById('color-theme').addEventListener('change', updateVisualizerSettings);
+            document.getElementById('sensitivity').addEventListener('input', updateSensitivity);
+            document.getElementById('dev-tools-toggle').addEventListener('click', toggleDevTools);
+            
+            // Initialize audio context (will be activated on first user interaction)
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Initialize canvas
+            const canvas = document.getElementById('visualization-canvas');
+            const container = document.getElementById('visualization-canvas-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            // Create EQ bars for developer tools
+            createEQBars();
+            
+            // Load the default video
+            loadVideo();
+        });
+
+        // Create EQ bars for developer tools
+        function createEQBars() {
+            const frequencyDisplay = document.getElementById('frequency-display');
+            frequencyDisplay.innerHTML = '';
+            
+            for (let i = 0; i < NUM_EQ_BARS; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'eq-bar';
+                bar.style.height = '0px';
+                frequencyDisplay.appendChild(bar);
+                eqBars.push(bar);
+            }
+        }
+
+        // Update EQ bars in developer tools
+        function updateEQBars() {
+            if (!analyzer) return;
+            
+            const eqData = analyzer.getEqData();
+            
+            for (let i = 0; i < eqBars.length; i++) {
+                if (i < eqData.length) {
+                    const height = (eqData[i] / 255) * 150;
+                    eqBars[i].style.height = height + 'px';
+                }
+            }
+        }
+
+        // Toggle developer tools
+        function toggleDevTools() {
+            const devTools = document.getElementById('dev-tools');
+            devTools.classList.toggle('active');
+            
+            const button = document.getElementById('dev-tools-toggle');
+            if (devTools.classList.contains('active')) {
+                button.textContent = 'Hide Developer Tools';
+            } else {
+                button.textContent = 'Show Developer Tools';
+            }
+        }
+
+        // YouTube API callback
+        function onYouTubeIframeAPIReady() {
+            // This function will be called when the YouTube API is ready
+            console.log("YouTube API Ready");
+        }
+
+        // Extract YouTube video ID from URL
+        function extractVideoId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        // Load the YouTube video
+        function loadVideo() {
+            const url = document.getElementById('youtube-url').value;
+            videoId = extractVideoId(url);
+            
+            if (!videoId) {
+                alert("Invalid YouTube URL. Please try again.");
+                return;
+            }
+            
+            // Resume audio context if it's suspended (browser autoplay policy)
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Create or replace the YouTube player
+            if (player) {
+                player.loadVideoById(videoId);
+            } else {
+                player = new YT.Player('video-container', {
+                    height: '240',
+                    width: '320',
+                    videoId: videoId,
+                    playerVars: {
+                        'autoplay': 1,
+                        'controls': 1
+                    },
+                    events: {
+                        'onReady': onPlayerReady,
+                        'onStateChange': onPlayerStateChange
+                    }
+                });
+            }
+        }
+
+        // Called when the YouTube player is ready
+        function onPlayerReady(event) {
+            event.target.playVideo();
+            
+            // Set up audio analysis
+            if (!analyzer) {
+                analyzer = new AudioAnalyzer(audioContext);
+                analyzer.connectToYouTubePlayer(player);
+            }
+            
+            // Initialize visualizer if not already created
+            if (!visualizer) {
+                const canvas = document.getElementById('visualization-canvas');
+                visualizer = new Visualizer(canvas, analyzer);
+                
+                // Start the animation loop
+                animateVisuals();
+            }
+            
+            // Apply current settings
+            updateVisualizerSettings();
+            
+            // Hide status indicator
+            document.getElementById('status-indicator').style.display = 'none';
+        }
+
+        // Handle player state changes
+        function onPlayerStateChange(event) {
+            // YT.PlayerState.PLAYING = 1, YT.PlayerState.PAUSED = 2
+            if (event.data === YT.PlayerState.PLAYING) {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                if (analyzer) analyzer.setPaused(false);
+                if (visualizer) visualizer.setPaused(false);
+                
+                document.getElementById('status-indicator').style.display = 'none';
+            } 
+            else if (event.data === YT.PlayerState.PAUSED) {
+                if (analyzer) analyzer.setPaused(true);
+                if (visualizer) visualizer.setPaused(true);
+                
+                document.getElementById('status-indicator').style.display = 'block';
+            }
+        }
+
+        // Update display mode (video+visuals or visuals only)
+        function updateDisplayMode() {
+            const mode = document.getElementById('display-toggle').value;
+            const videoContainer = document.getElementById('video-container');
+            
+            if (mode === 'visuals-only') {
+                videoContainer.style.display = 'none';
+            } else {
+                videoContainer.style.display = 'block';
+            }
+            
+            // Resize canvas to fill available space
+            if (visualizer) {
+                visualizer.resize();
+            }
+        }
+
+        // Update sensitivity
+        function updateSensitivity() {
+            const sensitivity = document.getElementById('sensitivity').value;
+            document.getElementById('sensitivity-value').textContent = sensitivity + '%';
+            
+            if (visualizer) {
+                visualizer.updateSettings({
+                    sensitivity: sensitivity / 100
+                });
+            }
+        }
+
+        // Update visualizer settings based on user selections
+        function updateVisualizerSettings() {
+            if (!visualizer) return;
+            
+            const visualType = document.getElementById('visual-type').value;
+            const colorTheme = document.getElementById('color-theme').value;
+            const sensitivity = document.getElementById('sensitivity').value / 100;
+            
+            visualizer.updateSettings({
+                type: visualType,
+                colorTheme: colorTheme,
+                sensitivity: sensitivity
+            });
+        }
+
+        // Animation loop for visuals
+        function animateVisuals() {
+            if (visualizer) {
+                visualizer.draw();
+            }
+            
+            // Update developer tools
+            if (document.getElementById('dev-tools').classList.contains('active')) {
+                updateEQBars();
+                updateAudioStats();
+            }
+            
+            requestAnimationFrame(animateVisuals);
+        }
+
+        // Update audio stats in developer tools
+        function updateAudioStats() {
+            if (!analyzer) return;
+            
+            const bassLevel = Math.round(analyzer.getAverageBass() / 255 * 100);
+            const midLevel = Math.round(analyzer.getAverageMid() / 255 * 100);
+            const trebleLevel = Math.round(analyzer.getAverageTreble() / 255 * 100);
+            const overallLevel = Math.round(analyzer.getAverageFrequency() / 255 * 100);
+            
+            document.getElementById('bass-level').textContent = bassLevel + '%';
+            document.getElementById('mid-level').textContent = midLevel + '%';
+            document.getElementById('treble-level').textContent = trebleLevel + '%';
+            document.getElementById('overall-level').textContent = overallLevel + '%';
+            
+            document.getElementById('bass-meter').style.width = bassLevel + '%';
+            document.getElementById('mid-meter').style.width = midLevel + '%';
+            document.getElementById('treble-meter').style.width = trebleLevel + '%';
+            document.getElementById('overall-meter').style.width = overallLevel + '%';
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (visualizer) {
+                visualizer.resize();
+            }
+        });
+    </script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>
