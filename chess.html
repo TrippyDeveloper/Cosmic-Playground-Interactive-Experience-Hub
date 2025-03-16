@@ -26,98 +26,56 @@ const TripChess = () => {
   const [turn, setTurn] = useState('w'); // 'w' for white, 'b' for black
   const [gameState, setGameState] = useState('playing'); // 'playing', 'check', 'checkmate'
   const [difficulty, setDifficulty] = useState('MEDIUM');
-  const [tripLevel, setTripLevel] = useState(80);
+  const [tripLevel, setTripLevel] = useState(60); // Reduced default for better performance
   const [capturedPieces, setCapturedPieces] = useState({ w: [], b: [] });
   const [moveHistory, setMoveHistory] = useState([]);
   const [hueRotation, setHueRotation] = useState(0);
   const [saturation, setSaturation] = useState(100);
   const [pulseEffect, setPulseEffect] = useState(0);
-  const [moveTrails, setMoveTrails] = useState([]);
-  const [fractals, setFractals] = useState([]);
-  const [showControls, setShowControls] = useState(true);
   const [lastMove, setLastMove] = useState(null);
   const [autoPlay, setAutoPlay] = useState(false);
   const [aiThinking, setAiThinking] = useState(false);
   const [moveDelay, setMoveDelay] = useState(1000);
   
-  const canvasRef = useRef(null);
+  const boardRef = useRef(null);
   const backgroundCanvasRef = useRef(null);
-  const fractalCanvasRef = useRef(null);
-  const trailsCanvasRef = useRef(null);
   
-  // Generate initial fractals
+  // Color cycle effect
   useEffect(() => {
-    setFractals(Array(8).fill().map(() => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      size: Math.random() * 100 + 50,
-      rotation: Math.random() * 360,
-      speed: Math.random() * 0.5 + 0.1,
-      hue: Math.random() * 360,
-      complexity: Math.random() * 5 + 3
-    })));
+    const interval = setInterval(() => {
+      setHueRotation(prev => (prev + 2) % 360);
+      setSaturation(prev => 80 + Math.sin(Date.now() * 0.001) * 20);
+    }, 50);
+    
+    return () => clearInterval(interval);
   }, []);
   
-  // AI move handler
+  // Pulse effect
   useEffect(() => {
-    if ((turn === 'b' || autoPlay) && gameState === 'playing') {
-      const aiPlayer = turn;
-      setAiThinking(true);
-      
-      const aiMoveTimer = setTimeout(() => {
-        makeAIMove(aiPlayer);
-        setAiThinking(false);
-      }, moveDelay);
-      
-      return () => clearTimeout(aiMoveTimer);
+    if (pulseEffect > 0) {
+      const timer = setTimeout(() => 
+        setPulseEffect(prev => Math.max(0, prev - 0.05)), 30);
+      return () => clearTimeout(timer);
     }
-  }, [turn, autoPlay, gameState]);
-  
-  // Background animation with fractal patterns
+  }, [pulseEffect]);
+
+  // Background animation effect
   useEffect(() => {
     const canvas = backgroundCanvasRef.current;
-    const fractalCanvas = fractalCanvasRef.current;
-    if (!canvas || !fractalCanvas) return;
+    if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
-    const fractalCtx = fractalCanvas.getContext('2d');
     let animationFrameId;
     let time = 0;
     
     // Set canvas dimensions
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    fractalCanvas.width = window.innerWidth;
-    fractalCanvas.height = window.innerHeight;
-    
-    const drawFractal = (x, y, size, depth, rotation, hue) => {
-      if (depth <= 0) return;
-      
-      const intensity = tripLevel / 100;
-      const branchLength = size * (0.7 + Math.sin(time * 0.2) * 0.1);
-      
-      fractalCtx.save();
-      fractalCtx.translate(x, y);
-      fractalCtx.rotate(rotation * Math.PI / 180);
-      
-      // Draw branch
-      fractalCtx.strokeStyle = `hsla(${hue}, ${saturation}%, 50%, ${intensity * 0.5})`;
-      fractalCtx.lineWidth = depth;
-      fractalCtx.beginPath();
-      fractalCtx.moveTo(0, 0);
-      fractalCtx.lineTo(0, -branchLength);
-      fractalCtx.stroke();
-      
-      // Draw sub-fractals
-      const newX = 0;
-      const newY = -branchLength;
-      const newSize = size * 0.7;
-      
-      drawFractal(newX, newY, newSize, depth - 1, rotation - 30 + Math.sin(time) * 10, (hue + 20) % 360);
-      drawFractal(newX, newY, newSize, depth - 1, rotation + 30 + Math.sin(time) * 10, (hue + 40) % 360);
-      
-      fractalCtx.restore();
+    const updateCanvasSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
+    
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
     
     const drawBackground = () => {
       time += 0.01;
@@ -126,7 +84,7 @@ const TripChess = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Draw trippy background with flowing patterns
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 8; i++) {
         const radius = 150 + Math.sin(time * (i + 1) * 0.3) * 100 * intensity;
         const x = canvas.width / 2 + Math.cos(time * 0.5 * (i + 1)) * 200 * intensity;
         const y = canvas.height / 2 + Math.sin(time * 0.3 * (i + 1)) * 200 * intensity;
@@ -149,7 +107,7 @@ const TripChess = () => {
           y + radius * Math.sin(0)
         );
         
-        for (let j = 0; j <= 360; j += 10) {
+        for (let j = 0; j <= 360; j += 20) {
           const angle = j * Math.PI / 180;
           const radiusVariation = 1 + Math.sin(angle * 3 + time) * 0.2 * intensity;
           ctx.lineTo(
@@ -161,152 +119,47 @@ const TripChess = () => {
         ctx.fill();
       }
       
-      // Draw moving wave patterns
-      ctx.strokeStyle = `hsla(${(time * 50) % 360}, ${saturation}%, 50%, ${0.2 * intensity})`;
-      ctx.lineWidth = 2;
-      
-      for (let wave = 0; wave < 5; wave++) {
-        ctx.beginPath();
-        for (let x = 0; x < canvas.width; x += 10) {
-          const y = canvas.height / 2 
-            + Math.sin(x * 0.01 + time + wave) * 50 * intensity
-            + Math.cos(x * 0.02 - time * 1.5) * 30 * intensity;
-          
-          if (x === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.stroke();
-      }
-      
-      // Draw fractals
-      fractalCtx.clearRect(0, 0, fractalCanvas.width, fractalCanvas.height);
-      
-      const newFractals = [...fractals];
-      for (let i = 0; i < newFractals.length; i++) {
-        const f = newFractals[i];
-        
-        // Move fractals
-        f.x += Math.sin(time * f.speed) * 2;
-        f.y += Math.cos(time * f.speed) * 2;
-        f.rotation += 0.2;
-        f.hue = (f.hue + 0.5) % 360;
-        
-        // Keep fractals in bounds
-        if (f.x < -100) f.x = canvas.width + 100;
-        if (f.x > canvas.width + 100) f.x = -100;
-        if (f.y < -100) f.y = canvas.height + 100;
-        if (f.y > canvas.height + 100) f.y = -100;
-        
-        // Draw only if trip level is high enough
-        if (tripLevel > 40) {
-          drawFractal(
-            f.x, 
-            f.y, 
-            f.size * (intensity * 0.5 + 0.5), 
-            Math.floor(f.complexity * (intensity * 0.5 + 0.5)), 
-            f.rotation, 
-            f.hue
-          );
-        }
-      }
-      
-      setFractals(newFractals);
-      
       animationFrameId = requestAnimationFrame(drawBackground);
     };
     
     drawBackground();
     
     return () => {
+      window.removeEventListener('resize', updateCanvasSize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [tripLevel, saturation, fractals]);
-  
-  // Trails animation
-  useEffect(() => {
-    const canvas = trailsCanvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    let animationFrameId;
-    
-    // Set canvas dimensions
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    
-    const drawTrails = () => {
-      const intensity = tripLevel / 100;
-      
-      // Fade out existing trails
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw trails
-      moveTrails.forEach((trail, index) => {
-        const progress = trail.progress;
-        const size = (1 - progress) * 40 * intensity;
-        
-        // Skip if too small
-        if (size < 1) return;
-        
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        
-        // Glow effect
-        const gradient = ctx.createRadialGradient(
-          trail.x, trail.y, 0,
-          trail.x, trail.y, size * 2
-        );
-        
-        gradient.addColorStop(0, `hsla(${trail.hue}, ${saturation}%, 70%, ${(1 - progress) * 0.8})`);
-        gradient.addColorStop(1, `hsla(${trail.hue}, ${saturation}%, 50%, 0)`);
-        
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(trail.x, trail.y, size, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
-        
-        // Update trail
-        trail.progress += 0.01;
-      });
-      
-      // Remove old trails
-      setMoveTrails(prev => prev.filter(trail => trail.progress < 1));
-      
-      animationFrameId = requestAnimationFrame(drawTrails);
-    };
-    
-    drawTrails();
-    
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [tripLevel, saturation, moveTrails]);
-  
-  // Color cycle effect
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHueRotation(prev => (prev + 2) % 360);
-      setSaturation(prev => 80 + Math.sin(Date.now() * 0.001) * 20);
-    }, 50);
-    
-    return () => clearInterval(interval);
-  }, []);
-  
-  // Pulse effect
-  useEffect(() => {
-    if (pulseEffect > 0) {
-      setTimeout(() => setPulseEffect(prev => Math.max(0, prev - 0.05)), 30);
-    }
-  }, [pulseEffect]);
+  }, [tripLevel, saturation]);
 
-  // Basic move validation
-  const getValidMoves = (row, col, currentBoard = board) => {
+  // AI move handler
+  useEffect(() => {
+    if ((turn === 'b' || autoPlay) && gameState === 'playing' && !aiThinking) {
+      const aiPlayer = turn;
+      setAiThinking(true);
+      
+      const aiMoveTimer = setTimeout(() => {
+        makeAIMove(aiPlayer);
+        setAiThinking(false);
+      }, moveDelay);
+      
+      return () => clearTimeout(aiMoveTimer);
+    }
+  }, [turn, autoPlay, gameState]);
+
+  // Get board coordinates safely using ref
+  const getBoardCoordinates = (row, col) => {
+    if (!boardRef.current) return { x: 0, y: 0 };
+    
+    const rect = boardRef.current.getBoundingClientRect();
+    const cellSize = rect.width / 8;
+    
+    return {
+      x: rect.left + col * cellSize + cellSize / 2,
+      y: rect.top + row * cellSize + cellSize / 2
+    };
+  };
+
+  // Basic move validation without directly modifying state
+  const getValidMoves = (row, col, currentBoard = board, currentTurn = turn) => {
     const piece = currentBoard[row][col];
     if (!piece) return [];
     
@@ -314,7 +167,7 @@ const TripChess = () => {
     const pieceColor = piece[0];
     
     // Only allow moving pieces of current turn
-    if (pieceColor !== turn && !autoPlay) return [];
+    if (pieceColor !== currentTurn && !autoPlay) return [];
     
     const moves = [];
     
@@ -440,7 +293,7 @@ const TripChess = () => {
     return moves;
   };
   
-  // Check if the king is in check
+  // Check if the king is in check (fixed version)
   const isInCheck = (color, testBoard = board) => {
     // Find the king
     let kingRow = -1;
@@ -457,7 +310,7 @@ const TripChess = () => {
       if (kingRow !== -1) break;
     }
     
-    if (kingRow === -1) return false; // King not found (shouldn't happen in a valid game)
+    if (kingRow === -1) return false; // King not found
     
     // Check if any opponent piece can capture the king
     const opponent = color === 'w' ? 'b' : 'w';
@@ -466,15 +319,8 @@ const TripChess = () => {
       for (let c = 0; c < 8; c++) {
         const piece = testBoard[r][c];
         if (piece && piece[0] === opponent) {
-          // Temporarily set turn to opponent to check their moves
-          const originalTurn = turn;
-          setTurn(opponent);
-          
-          // Get valid moves for this opponent piece
-          const moves = getValidMoves(r, c, testBoard);
-          
-          // Reset turn
-          setTurn(originalTurn);
+          // Get valid moves for this opponent piece - use the current opponent color as turn
+          const moves = getValidMoves(r, c, testBoard, opponent);
           
           // Check if any move can capture the king
           if (moves.some(([moveR, moveC]) => moveR === kingRow && moveC === kingCol)) {
@@ -486,58 +332,12 @@ const TripChess = () => {
     
     return false;
   };
-  
-  // Convert board coordinates to screen coordinates
-  const getBoardCoordinates = (row, col) => {
-    const boardElement = document.querySelector('.chess-board');
-    if (!boardElement) return { x: 0, y: 0 };
-    
-    const rect = boardElement.getBoundingClientRect();
-    const cellSize = rect.width / 8;
-    
-    return {
-      x: rect.left + col * cellSize + cellSize / 2,
-      y: rect.top + row * cellSize + cellSize / 2
-    };
-  };
-  
-  // Add a new trail for piece movement
-  const addMoveTrail = (fromRow, fromCol, toRow, toCol, hue) => {
-    const fromCoord = getBoardCoordinates(fromRow, fromCol);
-    const toCoord = getBoardCoordinates(toRow, toCol);
-    
-    // Create trail points along the path
-    const trailPoints = 15; // More trail points for smoother effect
-    const newTrails = [];
-    
-    for (let i = 0; i < trailPoints; i++) {
-      const progress = i / trailPoints;
-      
-      // Add some randomness to trail positions for a more organic feel
-      const jitter = tripLevel / 200; // More trippy = more jitter
-      const jitterX = (Math.random() - 0.5) * jitter * 40;
-      const jitterY = (Math.random() - 0.5) * jitter * 40;
-      
-      newTrails.push({
-        x: fromCoord.x + (toCoord.x - fromCoord.x) * progress + jitterX,
-        y: fromCoord.y + (toCoord.y - fromCoord.y) * progress + jitterY,
-        hue: (hue + i * 15) % 360,
-        progress: Math.random() * 0.2 // Stagger the start times
-      });
-    }
-    
-    setMoveTrails(prev => [...prev, ...newTrails]);
-  };
 
   // Execute a move on the board
   const executeMove = (fromRow, fromCol, toRow, toCol, currentBoard = board) => {
     // Create a deep copy of the board
     const newBoard = JSON.parse(JSON.stringify(currentBoard));
     const movingPiece = newBoard[fromRow][fromCol];
-    
-    // Create move trail effect
-    addMoveTrail(fromRow, fromCol, toRow, toCol, 
-                 movingPiece[0] === 'w' ? hueRotation : (hueRotation + 180) % 360);
     
     // Capture logic
     if (newBoard[toRow][toCol]) {
@@ -570,9 +370,7 @@ const TripChess = () => {
 
   const handleCellClick = (row, col) => {
     // Don't allow moves during AI turns or if game is over
-    if (turn === 'b' && !autoPlay) return;
-    if (gameState !== 'playing') return;
-    if (aiThinking) return;
+    if ((turn === 'b' && !autoPlay) || gameState !== 'playing' || aiThinking) return;
     
     // If a piece is already selected
     if (selectedPiece) {
@@ -595,13 +393,7 @@ const TripChess = () => {
         const nextTurn = turn === 'w' ? 'b' : 'w';
         const inCheck = isInCheck(nextTurn, newBoard);
         
-        if (inCheck) {
-          setGameState('check');
-        } else {
-          setGameState('playing');
-        }
-        
-        // Switch turns
+        setGameState(inCheck ? 'check' : 'playing');
         setTurn(nextTurn);
       } else {
         // If clicking on another piece of the same color, select that piece instead
@@ -623,6 +415,49 @@ const TripChess = () => {
     }
   };
   
+  // Calculate move score for AI
+  const calculateMoveScore = (from, to, currentBoard = board) => {
+    const [fromRow, fromCol] = from;
+    const [toRow, toCol] = to;
+    const piece = currentBoard[fromRow][fromCol];
+    const pieceColor = piece[0];
+    const pieceType = piece[1];
+    const targetPiece = currentBoard[toRow][toCol];
+    
+    let score = 0;
+    
+    // Base piece values
+    const pieceValues = { 'p': 10, 'n': 30, 'b': 30, 'r': 50, 'q': 90, 'k': 900 };
+    
+    // Add value for piece being moved
+    score += pieceValues[pieceType] * 0.1;
+    
+    // Value captured pieces highly
+    if (targetPiece) {
+      score += pieceValues[targetPiece[1]] * 10;
+    }
+    
+    // Favor center control for all pieces
+    const centerDistance = Math.abs(toRow - 3.5) + Math.abs(toCol - 3.5);
+    score += (4 - centerDistance) * 2;
+    
+    // Bonus for advancing pawns
+    if (pieceType === 'p') {
+      const advancementValue = pieceColor === 'w' ? (6 - toRow) : (toRow - 1);
+      score += advancementValue * 2;
+      
+      // Extra bonus for pawns near promotion
+      if ((pieceColor === 'w' && toRow <= 1) || (pieceColor === 'b' && toRow >= 6)) {
+        score += 30;
+      }
+    }
+    
+    // Slightly randomize score to prevent predictable play
+    score += Math.random() * 2;
+    
+    return score;
+  };
+  
   // Simple AI move generation
   const makeAIMove = (aiColor = 'b') => {
     if (gameState !== 'playing' && gameState !== 'check') return;
@@ -633,7 +468,7 @@ const TripChess = () => {
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 8; col++) {
         if (board[row][col] && board[row][col][0] === aiColor) {
-          const moves = getValidMoves(row, col);
+          const moves = getValidMoves(row, col, board, aiColor);
           for (let [moveRow, moveCol] of moves) {
             // Create a test board to evaluate the move
             const testBoard = JSON.parse(JSON.stringify(board));
@@ -702,131 +537,8 @@ const TripChess = () => {
     const nextTurn = aiColor === 'w' ? 'b' : 'w';
     const inCheck = isInCheck(nextTurn, newBoard);
     
-    if (inCheck) {
-      setGameState('check');
-    } else {
-      setGameState('playing');
-    }
-    
-    // Switch turns
+    setGameState(inCheck ? 'check' : 'playing');
     setTurn(nextTurn);
-  };
-  
-  // Calculate move score for AI
-  const calculateMoveScore = (from, to, currentBoard = board) => {
-    const [fromRow, fromCol] = from;
-    const [toRow, toCol] = to;
-    const piece = currentBoard[fromRow][fromCol];
-    const pieceColor = piece[0];
-    const pieceType = piece[1];
-    const targetPiece = currentBoard[toRow][toCol];
-    
-    let score = 0;
-    
-    // Base piece values
-    const pieceValues = { 'p': 10, 'n': 30, 'b': 30, 'r': 50, 'q': 90, 'k': 900 };
-    
-    // Add value for piece being moved
-    score += pieceValues[pieceType] * 0.1;
-    
-    // Value captured pieces highly
-    if (targetPiece) {
-      score += pieceValues[targetPiece[1]] * 10;
-    }
-    
-    // Favor center control for all pieces
-    const centerDistance = Math.abs(toRow - 3.5) + Math.abs(toCol - 3.5);
-    score += (4 - centerDistance) * 2;
-    
-    // Bonus for advancing pawns
-    if (pieceType === 'p') {
-      const advancementValue = pieceColor === 'w' ? (6 - toRow) : (toRow - 1);
-      score += advancementValue * 2;
-      
-      // Extra bonus for pawns near promotion
-      if ((pieceColor === 'w' && toRow <= 1) || (pieceColor === 'b' && toRow >= 6)) {
-        score += 30;
-      }
-    }
-    
-    // Knights are more valuable in crowded positions
-    if (pieceType === 'n') {
-      let crowdedSquares = 0;
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          if (currentBoard[r][c]) crowdedSquares++;
-        }
-      }
-      if (crowdedSquares > 20) score += 5;
-    }
-    
-    // Bishops and queens like open diagonals
-    if (pieceType === 'b' || pieceType === 'q') {
-      const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
-      let openDiagonals = 0;
-      
-      for (let [dr, dc] of directions) {
-        let r = toRow + dr;
-        let c = toCol + dc;
-        while (r >= 0 && r < 8 && c >= 0 && c < 8 && !currentBoard[r][c]) {
-          openDiagonals++;
-          r += dr;
-          c += dc;
-        }
-      }
-      
-      score += openDiagonals * (pieceType === 'b' ? 1 : 0.5);
-    }
-    
-    // Rooks and queens like open files
-    if (pieceType === 'r' || pieceType === 'q') {
-      const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-      let openLines = 0;
-      
-      for (let [dr, dc] of directions) {
-        let r = toRow + dr;
-        let c = toCol + dc;
-        while (r >= 0 && r < 8 && c >= 0 && c < 8 && !currentBoard[r][c]) {
-          openLines++;
-          r += dr;
-          c += dc;
-        }
-      }
-      
-      score += openLines * (pieceType === 'r' ? 1 : 0.5);
-    }
-    
-    // King safety in early/middle game
-    if (pieceType === 'k') {
-      // Count number of pieces to determine game phase
-      let pieceCount = 0;
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          if (currentBoard[r][c]) pieceCount++;
-        }
-      }
-      
-      // Early/middle game: keep king safe
-      if (pieceCount > 20) {
-        // Penalize moving king to center
-        score -= (4 - centerDistance) * 5;
-        
-        // Bonus for king in corner or edge
-        if (toRow === 0 || toRow === 7 || toCol === 0 || toCol === 7) {
-          score += 10;
-        }
-      } 
-      // Endgame: king should be active
-      else {
-        // In endgame, king should move toward center
-        score += (4 - centerDistance) * 3;
-      }
-    }
-    
-    // Slightly randomize score to prevent predictable play
-    score += Math.random() * 2;
-    
-    return score;
   };
   
   const resetGame = () => {
@@ -924,24 +636,16 @@ const TripChess = () => {
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black flex items-center justify-center">
-      {/* Background canvases */}
+      {/* Background canvas */}
       <canvas 
         ref={backgroundCanvasRef}
         className="absolute top-0 left-0 w-full h-full"
-      />
-      <canvas 
-        ref={fractalCanvasRef}
-        className="absolute top-0 left-0 w-full h-full z-10"
-      />
-      <canvas 
-        ref={trailsCanvasRef}
-        className="absolute top-0 left-0 w-full h-full z-20"
       />
       
       <div className="relative z-30 flex flex-col items-center">
         {/* Game title */}
         <h1 
-          className="text-5xl font-bold mb-4 text-center"
+          className="text-4xl font-bold mb-4 text-center"
           style={{ 
             color: `hsl(${hueRotation}, 100%, 70%)`,
             textShadow: `
@@ -956,81 +660,53 @@ const TripChess = () => {
         </h1>
         
         {/* Game controls */}
-        {showControls && (
-          <div className="flex flex-wrap justify-center gap-4 mb-4 p-3 bg-black bg-opacity-50 rounded-lg">
-            <div className="text-white">
-              <label className="mr-2 font-bold">Difficulty:</label>
-              <select 
-                value={difficulty} 
-                onChange={(e) => setDifficulty(e.target.value)}
-                className="p-1 bg-transparent border rounded text-white"
-                style={{ 
-                  borderColor: `hsl(${hueRotation}, 100%, 70%)`,
-                  backgroundColor: 'rgba(0, 0, 0, 0.7)'
-                }}
-              >
-                <option>EASY</option>
-                <option>MEDIUM</option>
-                <option>HARD</option>
-              </select>
-            </div>
-            
-            <div className="text-white">
-              <label className="mr-2 font-bold">Trip Level:</label>
-              <input 
-                type="range" 
-                min="20" 
-                max="100" 
-                value={tripLevel} 
-                onChange={(e) => setTripLevel(parseInt(e.target.value))}
-                className="w-32"
-              />
-            </div>
-            
-            <div className="text-white">
-              <label className="mr-2 font-bold">Move Speed:</label>
-              <select 
-                value={moveDelay} 
-                onChange={(e) => setMoveDelay(parseInt(e.target.value))}
-                className="p-1 bg-transparent border rounded text-white"
-                style={{ 
-                  borderColor: `hsl(${hueRotation}, 100%, 70%)`,
-                  backgroundColor: 'rgba(0, 0, 0, 0.7)'
-                }}
-              >
-                <option value="2000">Slow</option>
-                <option value="1000">Medium</option>
-                <option value="500">Fast</option>
-              </select>
-            </div>
-            
-            <div className="text-white">
-              <label className="mr-2 font-bold">Auto-Play:</label>
-              <button
-                onClick={toggleAutoPlay}
-                className={`px-3 py-1 rounded ${autoPlay ? 'bg-green-700' : 'bg-red-700'}`}
-              >
-                {autoPlay ? 'ON' : 'OFF'}
-              </button>
-            </div>
-            
-            <button
-              onClick={() => setShowControls(false)}
-              className="text-white hover:text-red-300 transition-colors"
+        <div className="flex flex-wrap justify-center gap-4 mb-4 p-3 bg-black bg-opacity-50 rounded-lg">
+          <div className="text-white">
+            <label className="mr-2 font-bold">Difficulty:</label>
+            <select 
+              value={difficulty} 
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="p-1 bg-transparent border rounded text-white"
+              style={{ 
+                borderColor: `hsl(${hueRotation}, 100%, 70%)`,
+                backgroundColor: 'rgba(0, 0, 0, 0.7)'
+              }}
             >
-              Hide Controls
+              <option>EASY</option>
+              <option>MEDIUM</option>
+              <option>HARD</option>
+            </select>
+          </div>
+          
+          <div className="text-white">
+            <label className="mr-2 font-bold">Trip Level:</label>
+            <input 
+              type="range" 
+              min="20" 
+              max="100" 
+              value={tripLevel} 
+              onChange={(e) => setTripLevel(parseInt(e.target.value))}
+              className="w-32"
+            />
+          </div>
+          
+          <div className="text-white">
+            <label className="mr-2 font-bold">Auto-Play:</label>
+            <button
+              onClick={toggleAutoPlay}
+              className={`px-3 py-1 rounded ${autoPlay ? 'bg-green-700' : 'bg-red-700'}`}
+            >
+              {autoPlay ? 'ON' : 'OFF'}
             </button>
           </div>
-        )}
-        
-        {!showControls && (
+          
           <button
-            onClick={() => setShowControls(true)}
-            className="mb-2 text-white hover:text-green-300 transition-colors"
+            onClick={resetGame}
+            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            Show Controls
+            Reset Game
           </button>
-        )}
+        </div>
         
         <div className="text-center bg-black bg-opacity-50 px-4 py-1 rounded-full mb-2">
           <span className="text-white font-bold">
@@ -1073,6 +749,7 @@ const TripChess = () => {
           
           {/* Chess board */}
           <div 
+            ref={boardRef}
             className="relative chess-board"
             style={{ 
               ...getBoardGlowStyle(),
@@ -1207,47 +884,6 @@ const TripChess = () => {
             </div>
           </div>
         </div>
-        
-        <div className="flex gap-4 mt-4">
-          <button 
-            onClick={resetGame}
-            className="py-2 px-6 rounded-full font-bold transition-all"
-            style={{ 
-              background: `linear-gradient(45deg, 
-                hsl(${hueRotation}, 100%, 50%), 
-                hsl(${(hueRotation + 60) % 360}, 100%, 50%), 
-                hsl(${(hueRotation + 120) % 360}, 100%, 50%), 
-                hsl(${(hueRotation + 180) % 360}, 100%, 50%), 
-                hsl(${(hueRotation + 240) % 360}, 100%, 50%),
-                hsl(${(hueRotation + 300) % 360}, 100%, 50%),
-                hsl(${hueRotation}, 100%, 50%)
-              )`,
-              backgroundSize: '400% 400%',
-              animation: 'gradient-shift 3s linear infinite',
-              color: 'white',
-              textShadow: '0 0 5px rgba(0, 0, 0, 0.5)',
-              boxShadow: `0 0 20px hsl(${hueRotation}, 100%, 50%)`,
-              transform: `scale(${1 + Math.sin(Date.now() * 0.003) * 0.05})`
-            }}
-          >
-            Reset Game
-          </button>
-          
-          <button 
-            onClick={toggleAutoPlay}
-            className="py-2 px-6 rounded-full font-bold transition-all"
-            style={{ 
-              background: autoPlay ? 
-                `linear-gradient(45deg, hsl(120, 100%, 30%), hsl(140, 100%, 40%))` : 
-                `linear-gradient(45deg, hsl(0, 100%, 40%), hsl(20, 100%, 50%))`,
-              color: 'white',
-              textShadow: '0 0 5px rgba(0, 0, 0, 0.5)',
-              boxShadow: `0 0 20px hsl(${autoPlay ? 120 : 0}, 100%, 50%)`,
-            }}
-          >
-            {autoPlay ? 'Stop Auto-Play' : 'Start Auto-Play'}
-          </button>
-        </div>
       </div>
       
       {/* Game over overlay */}
@@ -1315,7 +951,7 @@ const TripChess = () => {
       )}
       
       {/* CSS animations */}
-      <style jsx global>{`
+      <style jsx>{`
         @keyframes pulse {
           0% { transform: scale(0.95); opacity: 0.7; }
           50% { transform: scale(1.05); opacity: 0.9; }
@@ -1325,11 +961,6 @@ const TripChess = () => {
         @keyframes gradient-shift {
           0% { background-position: 0% 50%; }
           100% { background-position: 100% 50%; }
-        }
-        
-        body {
-          margin: 0;
-          overflow: hidden;
         }
       `}</style>
     </div>
