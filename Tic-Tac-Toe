@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trippy Tic-Tac-Toe</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #000;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(270deg, #FF44CC, #00FFFF, #00FF66, #9900FF);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+      z-index: -1;
+      opacity: 0.3;
+    }
+
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      text-align: center;
+      position: relative;
+      z-index: 10;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* LSD Home Button Styles */
+    .lsd-home-button {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 60px;         /* Set desired width */
+      aspect-ratio: 1;      /* Maintains a square (1:1) aspect ratio */
+      text-decoration: none;
+      border-radius: 10px;
+      overflow: hidden;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+      background-size: 400%;
+      animation: lsd-glow 20s linear infinite;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .lsd-home-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+    }
+
+    @keyframes lsd-glow {
+      0%   { background-position: 0 0; }
+      50%  { background-position: 400% 0; }
+      100% { background-position: 0 0; }
+    }
+
+    .lsd-home-button .home-icon {
+      width: 50%;
+      height: 50%;
+      fill: white;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 2rem;
+      background: linear-gradient(90deg, #FF44CC, #00FFFF, #00FF66);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 300% 300%;
+      animation: textGradient 5s ease infinite;
+    }
+
+    @keyframes textGradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 10px;
+      margin: 0 auto;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 3rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+
+    .cell:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(255, 68, 204, 0.6);
+    }
+
+    .x {
+      color: #FF44CC;
+      text-shadow: 0 0 10px #FF44CC;
+    }
+
+    .o {
+      color: #00FFFF;
+      text-shadow: 0 0 10px #00FFFF;
+    }
+
+    .status {
+      margin: 20px 0;
+      font-size: 1.5rem;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      background: linear-gradient(45deg, #FF44CC, #9900FF);
+      border: none;
+      border-radius: 50px;
+      color: white;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(255, 68, 204, 0.6);
+    }
+    
+    .btn {
+      padding: 1rem 2rem;
+      margin: 0.5rem;
+      font-size: 1.5rem;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      position: relative;
+      overflow: hidden;
+      z-index: 1000;
+      color: white;
+      pointer-events: auto;
+      display: inline-block;
+    }
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+      background-size: 400%;
+      z-index: -1;
+      filter: blur(5px);
+      animation: glowing 20s linear infinite;
+    }
+    
+    @keyframes glowing {
+      0% { background-position: 0 0; }
+      50% { background-position: 400% 0; }
+      100% { background-position: 0 0; }
+    }
+    
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    }
+    
+    .btn:active {
+      transform: scale(0.95);
+    }
+    
+    .start-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+    
+    .game-content {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+  
+  <!-- Start Screen -->
+  <div class="start-screen">
+    <h1>Trippy Tic-Tac-Toe</h1>
+    <p>Are you ready for a psychedelic game experience?</p>
+    <button id="startButton" class="btn">Start Trip</button>
+  </div>
+  
+  <!-- Game Content -->
+  <div class="container game-content">
+    <!-- LSD Home Button linking back to index.html -->
+    <a href="index.html" class="lsd-home-button">
+      <svg viewBox="0 0 64 64" class="home-icon" xmlns="http://www.w3.org/2000/svg">
+        <path d="M32 12l22 22h-6v18h-12v-12h-8v12h-12v-18h-6z"/>
+      </svg>
+    </a>
+    
+    <h1>Trippy Tic-Tac-Toe</h1>
+    <div class="status">Player X's turn</div>
+    <div class="board">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+    <button id="reset">Reset Game</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cells = document.querySelectorAll('.cell');
+      const status = document.querySelector('.status');
+      const resetBtn = document.getElementById('reset');
+      const startBtn = document.getElementById('startButton');
+      const startScreen = document.querySelector('.start-screen');
+      const gameContent = document.querySelector('.game-content');
+      
+      let currentPlayer = 'X';
+      let gameBoard = ['', '', '', '', '', '', '', '', ''];
+      let gameActive = true;
+      
+      // Start game when button is clicked
+      startBtn.addEventListener('click', () => {
+        startScreen.style.display = 'none';
+        gameContent.style.display = 'flex';
+        initGame();
+      });
+      
+      // Initialize game
+      function initGame() {
+        // Add trippy background colors to cells
+        cells.forEach((cell, index) => {
+          const hue = (index * 40) % 360;
+          cell.style.boxShadow = `0 0 15px hsla(${hue}, 100%, 60%, 0.5)`;
+        });
+      }
+      
+      // Handle cell click
+      function handleCellClick(e) {
+        const cell = e.target;
+        const index = parseInt(cell.getAttribute('data-index'));
+        
+        if (gameBoard[index] !== '' || !gameActive) return;
+        
+        gameBoard[index] = currentPlayer;
+        cell.textContent = currentPlayer;
+        cell.classList.add(currentPlayer.toLowerCase());
+        
+        // Add trippy effect on click
+        createRippleEffect(cell);
+        
+        if (checkWin()) {
+          status.textContent = `Player ${currentPlayer} wins!`;
+          gameActive = false;
+          status.style.color = currentPlayer === 'X' ? '#FF44CC' : '#00FFFF';
+          return;
+        }
+        
+        if (checkDraw()) {
+          status.textContent = "It's a cosmic draw!";
+          gameActive = false;
+          return;
+        }
+        
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        status.textContent = `Player ${currentPlayer}'s turn`;
+      }
+      
+      // Create ripple effect
+      function createRippleEffect(cell) {
+        const ripple = document.createElement('div');
+        ripple.style.position = 'absolute';
+        ripple.style.borderRadius = '50%';
+        ripple.style.transform = 'scale(0)';
+        ripple.style.background = currentPlayer === 'X' ? 
+          'radial-gradient(circle, rgba(255,68,204,0.8) 0%, rgba(255,68,204,0) 70%)' : 
+          'radial-gradient(circle, rgba(0,255,255,0.8) 0%, rgba(0,255,255,0) 70%)';
+        ripple.style.width = '200%';
+        ripple.style.height = '200%';
+        ripple.style.top = '-50%';
+        ripple.style.left = '-50%';
+        ripple.style.animation = 'ripple 0.8s ease-out';
+        
+        cell.style.position = 'relative';
+        cell.style.overflow = 'hidden';
+        cell.appendChild(ripple);
+        
+        setTimeout(() => {
+          ripple.remove();
+        }, 800);
+      }
+      
+      // Check for win
+      function checkWin() {
+        const winPatterns = [
+          [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+          [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+          [0, 4, 8], [2, 4, 6]             // diagonals
+        ];
+        
+        return winPatterns.some(pattern => {
+          const [a, b, c] = pattern;
+          return gameBoard[a] !== '' && 
+                 gameBoard[a] === gameBoard[b] && 
+                 gameBoard[a] === gameBoard[c];
+        });
+      }
+      
+      // Check for draw
+      function checkDraw() {
+        return !gameBoard.includes('');
+      }
+      
+      // Reset game
+      function resetGame() {
+        currentPlayer = 'X';
+        gameBoard = ['', '', '', '', '', '', '', '', ''];
+        gameActive = true;
+        status.textContent = `Player ${currentPlayer}'s turn`;
+        status.style.color = 'white';
+        
+        cells.forEach(cell => {
+          cell.textContent = '';
+          cell.classList.remove('x', 'o');
+        });
+      }
+      
+      // Event listeners
+      cells.forEach(cell => {
+        cell.addEventListener('click', handleCellClick);
+      });
+      
+      resetBtn.addEventListener('click', resetGame);
+      
+      // Add keyframe animation for ripple effect
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes ripple {
+          from { transform: scale(0); opacity: 1; }
+          to { transform: scale(1); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    });
+  </script>
+</body>
+</html>
