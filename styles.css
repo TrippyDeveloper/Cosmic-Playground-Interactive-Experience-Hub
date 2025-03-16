@@ -1,0 +1,36 @@
+.lsd-home-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 60px;         /* Adjust width as needed */
+  aspect-ratio: 1;      /* Maintains a square (1:1) aspect ratio */
+  text-decoration: none;
+  border-radius: 10px;
+  overflow: hidden;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+  background-size: 400%;
+  animation: lsd-glow 20s linear infinite;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.lsd-home-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+}
+
+@keyframes lsd-glow {
+  0%   { background-position: 0 0; }
+  50%  { background-position: 400% 0; }
+  100% { background-position: 0 0; }
+}
+
+.lsd-home-button .home-icon {
+  width: 50%;
+  height: 50%;
+  fill: white;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
+}
