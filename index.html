@@ -24,11 +24,7 @@
       --card-bg: rgba(20, 20, 40, 0.7);
       --glow-intensity: 5px;
     }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Quicksand', sans-serif;
       background-color: var(--background-color);
@@ -72,9 +68,8 @@
       font-weight: 700;
       letter-spacing: 0.2em;
       color: var(--text-color);
-      text-shadow:
-        0 0 var(--glow-intensity) var(--primary-color),
-        0 0 calc(var(--glow-intensity) * 2) var(--secondary-color);
+      text-shadow: 0 0 var(--glow-intensity) var(--primary-color),
+                   0 0 calc(var(--glow-intensity) * 2) var(--secondary-color);
       animation: text-flicker 5s infinite alternate;
     }
     .subtitle {
@@ -117,9 +112,7 @@
       align-items: center;
       padding: 1.5rem;
       cursor: pointer;
-      background: linear-gradient(90deg, 
-        rgba(255, 0, 255, 0.2), 
-        rgba(0, 255, 255, 0.2));
+      background: linear-gradient(90deg, rgba(255, 0, 255, 0.2), rgba(0, 255, 255, 0.2));
       position: relative;
       overflow: hidden;
     }
@@ -130,15 +123,10 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.2), 
-        transparent);
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
       transition: left 0.5s ease;
     }
-    .category-header:hover::before {
-      left: 100%;
-    }
+    .category-header:hover::before { left: 100%; }
     .category-header h2 {
       font-family: 'Orbitron', sans-serif;
       letter-spacing: 0.1em;
@@ -182,7 +170,7 @@
       padding: 0;
       max-height: 0;
       overflow: hidden;
-      transition: max-height 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+      transition: max-height 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275),
                   padding 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       opacity: 0;
     }
@@ -196,7 +184,7 @@
       background: var(--card-bg);
       border-radius: 10px;
       overflow: hidden;
-      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275),
                   box-shadow 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       position: relative;
       transform: translateY(30px);
@@ -226,15 +214,11 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(45deg, 
-        rgba(255, 0, 255, 0.3), 
-        rgba(0, 255, 255, 0.3));
+      background: linear-gradient(45deg, rgba(255, 0, 255, 0.3), rgba(0, 255, 255, 0.3));
       opacity: 0.7;
       transition: opacity 0.3s ease;
     }
-    .item-card:hover .item-image::before {
-      opacity: 0.9;
-    }
+    .item-card:hover .item-image::before { opacity: 0.9; }
     .item-card h3 {
       font-family: 'Orbitron', sans-serif;
       padding: 1rem 1rem 0.5rem;
@@ -249,9 +233,7 @@
       display: inline-block;
       margin: 0 1rem 1rem;
       padding: 0.5rem 1.5rem;
-      background: linear-gradient(90deg, 
-        var(--primary-color), 
-        var(--secondary-color));
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
       border: none;
       border-radius: 25px;
       color: var(--text-color);
@@ -266,9 +248,7 @@
       transition: all 0.3s ease;
       box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
     }
-    .glow-button:hover {
-      box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
-    }
+    .glow-button:hover { box-shadow: 0 0 20px rgba(255, 0, 255, 0.8); }
     .glow-button::before {
       content: '';
       position: absolute;
@@ -276,15 +256,10 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.4), 
-        transparent);
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
       transition: left 0.7s ease;
     }
-    .glow-button:hover::before {
-      left: 100%;
-    }
+    .glow-button:hover::before { left: 100%; }
     /* Footer */
     footer {
       text-align: center;
@@ -317,9 +292,7 @@
       z-index: 9999;
       transition: opacity 1s ease;
     }
-    .loading-content {
-      text-align: center;
-    }
+    .loading-content { text-align: center; }
     .loading-spinner {
       width: 60px;
       height: 60px;
@@ -329,26 +302,15 @@
       animation: spin 1s linear infinite;
       margin: 0 auto 20px;
     }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     /* Responsive Design */
     @media (max-width: 768px) {
-      .glow-text {
-        font-size: 2.5rem;
-      }
-      .category-content {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      }
+      .glow-text { font-size: 2.5rem; }
+      .category-content { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
     }
     @media (max-width: 480px) {
-      .glow-text {
-        font-size: 2rem;
-      }
-      .category-content {
-        grid-template-columns: 1fr;
-      }
+      .glow-text { font-size: 2rem; }
+      .category-content { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -373,36 +335,42 @@
         <div class="expand-icon"></div>
       </div>
       <div class="category-content">
+        <!-- Cosmic Tetris -->
         <div class="item-card" data-type="retro" style="--delay: 1">
           <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=retro%20tetris%20game%20with%20neon%20blocks%20in%20space&w=600&h=400&style=pixel_art')"></div>
           <h3>Cosmic Tetris</h3>
           <p>A psychedelic take on the classic block puzzle</p>
           <a href="Tetris.html" class="glow-button">PLAY</a>
         </div>
+        <!-- Nebula Breaker -->
         <div class="item-card" data-type="arcade" style="--delay: 2">
           <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=arcade%20breakout%20game%20with%20cosmic%20theme&w=600&h=400&style=pixel_art')"></div>
           <h3>Nebula Breaker</h3>
           <p>Destroy cosmic barriers in this Breakout reimagining</p>
           <a href="Breaker.html" class="glow-button">PLAY</a>
         </div>
+        <!-- Trippy Tic-Tac-Toe -->
         <div class="item-card" data-type="puzzle" style="--delay: 3">
           <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=psychedelic%20tic%20tac%20toe%20board%20with%20vivid%20colors&w=600&h=400&style=realistic')"></div>
           <h3>Trippy Tic-Tac-Toe</h3>
           <p>Psychedelic twist on the classic game of tic-tac-toe</p>
           <a href="Tic-Tac-Toe.html" class="glow-button">PLAY</a>
         </div>
+        <!-- Surreal Chess -->
         <div class="item-card" data-type="strategy" style="--delay: 4">
           <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=classic%20chess%20game%20with%20a%20cosmic%20twist&w=600&h=400&style=realistic')"></div>
           <h3>Surreal Chess</h3>
           <p>Traditional strategy game with a cosmic twist</p>
           <a href="chess.html" class="glow-button">PLAY</a>
         </div>
+        <!-- Placeholder Game 1 -->
         <div class="item-card" data-type="placeholder" style="--delay: 5">
           <div class="item-image" style="--bg-image: url('https://via.placeholder.com/600x400.png?text=Placeholder+Game+1')"></div>
           <h3>Placeholder Game 1</h3>
           <p>Coming soon</p>
           <a href="Placeholder-Game-1.html" class="glow-button">PLAY</a>
         </div>
+        <!-- Placeholder Game 2 -->
         <div class="item-card" data-type="placeholder" style="--delay: 6">
           <div class="item-image" style="--bg-image: url('https://via.placeholder.com/600x400.png?text=Placeholder+Game+2')"></div>
           <h3>Placeholder Game 2</h3>
@@ -418,17 +386,19 @@
         <div class="expand-icon"></div>
       </div>
       <div class="category-content">
-        <div class="item-card" data-type="music" style="--delay: 1">
-          <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=music%20visualizer%20with%20colorful%20waveforms&w=600&h=400&style=realistic')"></div>
-          <h3>Sonic Visualizer</h3>
-          <p>Interactive music visualization experience</p>
-          <a href="Visualizer.html" class="glow-button">EXPLORE</a>
-        </div>
-        <div class="item-card" data-type="physics" style="--delay: 2">
+        <!-- Gravity Playground -->
+        <div class="item-card" data-type="physics" style="--delay: 1">
           <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=physics%20simulation%20with%20gravity%20and%20particles&w=600&h=400&style=realistic')"></div>
           <h3>Gravity Playground</h3>
           <p>Manipulate physics in a cosmic environment</p>
           <a href="Playground.html" class="glow-button">EXPLORE</a>
+        </div>
+        <!-- Space Sound Effect Interactive -->
+        <div class="item-card" data-type="sound" style="--delay: 2">
+          <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=space%20sound%20effect%20interactive%20with%20cosmic%20vibes&w=600&h=400&style=realistic')"></div>
+          <h3>Space Sound Effect Interactive</h3>
+          <p>Experience immersive cosmic soundscapes</p>
+          <a href="Space-Sound-Effect.html" class="glow-button">EXPLORE</a>
         </div>
       </div>
     </section>
@@ -439,59 +409,19 @@
         <div class="expand-icon"></div>
       </div>
       <div class="category-content">
-        <div class="item-card" data-type="generator" style="--delay: 1">
+        <!-- Sonic Visualizer (moved from INTERACTIVE) -->
+        <div class="item-card" data-type="music" style="--delay: 1">
+          <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=music%20visualizer%20with%20colorful%20waveforms&w=600&h=400&style=realistic')"></div>
+          <h3>Sonic Visualizer</h3>
+          <p>Interactive music visualization experience</p>
+          <a href="Visualizer.html" class="glow-button">EXPLORE</a>
+        </div>
+        <!-- Fractal Explorer -->
+        <div class="item-card" data-type="generator" style="--delay: 2">
           <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=fractal%20patterns%20with%20infinite%20zoom&w=600&h=400&style=realistic')"></div>
           <h3>Fractal Explorer</h3>
           <p>Generate and explore infinite fractal patterns</p>
           <a href="Explorer.html" class="glow-button">CREATE</a>
-        </div>
-        <div class="item-card" data-type="art" style="--delay: 2">
-          <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=neon%20psychedelic%20art%20with%20glowing%20colors&w=600&h=400&style=realistic')"></div>
-          <h3>Neon Canvas</h3>
-          <p>Create glowing psychedelic artwork</p>
-          <a href="Canvas.html" class="glow-button">CREATE</a>
-        </div>
-      </div>
-    </section>
-    <!-- SPACE Section -->
-    <section class="category-section" id="space">
-      <div class="category-header">
-        <h2>SPACE</h2>
-        <div class="expand-icon"></div>
-      </div>
-      <div class="category-content">
-        <div class="item-card" data-type="exploration" style="--delay: 1">
-          <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=3d%20solar%20system%20explorer%20with%20planets&w=600&h=400&style=realistic')"></div>
-          <h3>Solar System Explorer</h3>
-          <p>Navigate through an interactive 3D solar system</p>
-          <a href="Solar-System-Explorer.html" class="glow-button">LAUNCH</a>
-        </div>
-        <div class="item-card" data-type="simulation" style="--delay: 2">
-          <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=star%20formation%20and%20supernova%20simulation&w=600&h=400&style=realistic')"></div>
-          <h3>Stellar Genesis</h3>
-          <p>Watch the birth and death of stars</p>
-          <a href="Genesis.html" class="glow-button">LAUNCH</a>
-        </div>
-      </div>
-    </section>
-    <!-- OTHER Section -->
-    <section class="category-section" id="other">
-      <div class="category-header">
-        <h2>OTHER</h2>
-        <div class="expand-icon"></div>
-      </div>
-      <div class="category-content">
-        <div class="item-card" data-type="tool" style="--delay: 1">
-          <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=mind%20mapping%20tool%20with%20connected%20nodes&w=600&h=400&style=realistic')"></div>
-          <h3>Mind Mapper</h3>
-          <p>Visual brainstorming and idea organization</p>
-          <a href="Mapper.html" class="glow-button">OPEN</a>
-        </div>
-        <div class="item-card" data-type="experimental" style="--delay: 2">
-          <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=neural%20network%20visualization%20with%20glowing%20connections&w=600&h=400&style=realistic')"></div>
-          <h3>Neural Playground</h3>
-          <p>Experiment with neural networks and AI</p>
-          <a href="Neural-Playground.html" class="glow-button">OPEN</a>
         </div>
       </div>
     </section>
@@ -571,10 +501,7 @@
       camera.position.z = 500;
       
       // Mouse movement for parallax
-      let mouseX = 0;
-      let mouseY = 0;
-      let targetX = 0;
-      let targetY = 0;
+      let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
       
       document.addEventListener('mousemove', function(event) {
         mouseX = (event.clientX - window.innerWidth / 2) / 100;
@@ -590,19 +517,14 @@
         if (particles.length >= maxParticles) {
           const oldParticle = particles.shift();
           oldParticle.style.opacity = 0;
-          setTimeout(() => {
-            particlesContainer.removeChild(oldParticle);
-          }, 300);
+          setTimeout(() => { particlesContainer.removeChild(oldParticle); }, 300);
         }
         
         const particle = document.createElement('div');
         particle.className = 'particle';
-        
-        // Random properties
         const size = Math.random() * 15 + 5;
         const duration = Math.random() * 3 + 2;
         const colorType = Math.floor(Math.random() * 3);
-        
         let color;
         switch (colorType) {
           case 0: color = 'rgba(255, 0, 255, 0.7)'; break;
@@ -610,21 +532,17 @@
           case 2: color = 'rgba(255, 255, 0, 0.7)'; break;
         }
         
-        // Apply styles
         particle.style.width = `${size}px`;
         particle.style.height = `${size}px`;
         particle.style.backgroundColor = color;
         particle.style.boxShadow = `0 0 ${size * 2}px ${color}`;
         particle.style.left = `${x}px`;
         particle.style.top = `${y}px`;
-        
-        // Animation
         particle.style.transition = `transform ${duration}s ease-out, opacity ${duration}s ease-out`;
         
         particlesContainer.appendChild(particle);
         particles.push(particle);
         
-        // Start animation after a small delay
         setTimeout(() => {
           particle.style.opacity = 0.7;
           const angle = Math.random() * Math.PI * 2;
@@ -634,7 +552,6 @@
           particle.style.transform = `translate(${translateX}px, ${translateY}px) scale(0)`;
         }, 10);
         
-        // Remove particle after animation
         setTimeout(() => {
           particle.style.opacity = 0;
           setTimeout(() => {
@@ -642,24 +559,20 @@
               particlesContainer.removeChild(particle);
             }
             const index = particles.indexOf(particle);
-            if (index > -1) {
-              particles.splice(index, 1);
-            }
+            if (index > -1) { particles.splice(index, 1); }
           }, 300);
         }, duration * 1000);
       }
       
-      // Create particles on mouse move
       let lastParticleTime = 0;
       document.addEventListener('mousemove', function(event) {
         const currentTime = Date.now();
-        if (currentTime - lastParticleTime > 50) { // Limit particle creation rate
+        if (currentTime - lastParticleTime > 50) {
           createCosmicParticle(event.clientX, event.clientY);
           lastParticleTime = currentTime;
         }
       });
       
-      // Create particles on touch move for mobile
       document.addEventListener('touchmove', function(event) {
         const currentTime = Date.now();
         if (currentTime - lastParticleTime > 50) {
@@ -669,63 +582,45 @@
         }
       });
       
-      // Animation loop
       function animate() {
         requestAnimationFrame(animate);
-        
-        // Update stars
         const positions = stars.geometry.attributes.position.array;
         const velocities = stars.geometry.attributes.velocity.array;
-        
         for (let i = 0; i < starCount; i++) {
           positions[i * 3 + 2] += velocities[i];
-          
-          // Reset star position when it goes too far
           if (positions[i * 3 + 2] > 500) {
             positions[i * 3] = (Math.random() - 0.5) * 2000;
             positions[i * 3 + 1] = (Math.random() - 0.5) * 2000;
             positions[i * 3 + 2] = -1000;
           }
         }
-        
         stars.geometry.attributes.position.needsUpdate = true;
-        
-        // Smooth camera movement
         targetX = mouseX * 0.3;
         targetY = mouseY * 0.3;
         camera.position.x += (targetX - camera.position.x) * 0.05;
         camera.position.y += (-targetY - camera.position.y) * 0.05;
         camera.lookAt(scene.position);
-        
-        // Rotate nebulas
         nebulas.forEach((nebula, i) => {
           nebula.rotation.x += 0.001 * (i + 1);
           nebula.rotation.y += 0.002 * (i + 1);
         });
-        
         renderer.render(scene, camera);
       }
       
-      // Handle window resize
       window.addEventListener('resize', function() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
       
-      // Category expansion
       const categoryHeaders = document.querySelectorAll('.category-header');
-      
       categoryHeaders.forEach(header => {
         header.addEventListener('click', function() {
           const section = this.parentElement;
           section.classList.toggle('active');
-          
-          // Create particles at the header position
           const rect = this.getBoundingClientRect();
           const centerX = rect.left + rect.width / 2;
           const centerY = rect.top + rect.height / 2;
-          
           for (let i = 0; i < 10; i++) {
             setTimeout(() => {
               createCosmicParticle(
@@ -734,32 +629,21 @@
               );
             }, i * 50);
           }
-          
-          // Add delay to each card animation
           if (section.classList.contains('active')) {
             const cards = section.querySelectorAll('.item-card');
-            cards.forEach((card, index) => {
-              card.style.transitionDelay = `${index * 0.1}s`;
-            });
+            cards.forEach((card, index) => { card.style.transitionDelay = `${index * 0.1}s`; });
           }
         });
       });
       
-      // Auto-open first category after loading
       setTimeout(() => {
         document.querySelector('.category-section').classList.add('active');
-        
-        // Hide loading screen
         loadingScreen.style.opacity = 0;
-        setTimeout(() => {
-          loadingScreen.style.display = 'none';
-        }, 1000);
+        setTimeout(() => { loadingScreen.style.display = 'none'; }, 1000);
       }, 2000);
       
-      // Start animation
       animate();
       
-      // Create initial particles
       for (let i = 0; i < 20; i++) {
         setTimeout(() => {
           createCosmicParticle(
@@ -769,18 +653,13 @@
         }, i * 100);
       }
       
-      // Add sound effect to buttons and navigate if href is set
       const buttons = document.querySelectorAll('.glow-button');
       buttons.forEach(button => {
         button.addEventListener('click', function(e) {
           e.preventDefault();
-          
-          // Play sound effect
           const sound = new Audio('https://cdn.simulationtheory.ai/gasset/?asset=sound&prompt=sci-fi UI button click');
           sound.volume = 0.3;
           sound.play();
-          
-          // Create particles at button position
           const rect = this.getBoundingClientRect();
           for (let i = 0; i < 15; i++) {
             setTimeout(() => {
@@ -790,17 +669,11 @@
               );
             }, i * 30);
           }
-          
-          // If the href is valid, navigate to it
           const href = this.getAttribute('href');
           if (href && href !== "#") {
-            setTimeout(() => {
-              window.location.href = href;
-            }, 500);
+            setTimeout(() => { window.location.href = href; }, 500);
           } else {
-            setTimeout(() => {
-              alert('This would navigate to: ' + this.textContent + ' experience');
-            }, 500);
+            setTimeout(() => { alert('This would navigate to: ' + this.textContent + ' experience'); }, 500);
           }
         });
       });
