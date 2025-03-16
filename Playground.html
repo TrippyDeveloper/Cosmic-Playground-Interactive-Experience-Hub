@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="Cosmic Gravity Playground">
+    <meta property="og:description" content="Manipulate physics in a cosmic environment with tiny particles">
+    <meta property="og:image" content="https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=cosmic%20particles%20in%20space&w=64&h=64">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=cosmic%20particle&w=32&h=32">
+    <title>Cosmic Gravity Playground</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050510;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #e0e0ff;
+        }
+        
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 2;
+            background: rgba(10, 10, 20, 0.7);
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid rgba(100, 100, 255, 0.2);
+            box-shadow: 0 0 20px rgba(50, 50, 150, 0.2);
+            backdrop-filter: blur(5px);
+            max-width: 350px;
+        }
+        
+        .slider-container {
+            margin: 10px 0;
+        }
+        
+        label {
+            display: inline-block;
+            width: 150px;
+            color: rgba(180, 180, 255, 0.8);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        input[type="range"] {
+            width: 150px;
+            background: rgba(50, 50, 100, 0.3);
+            height: 4px;
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(150, 150, 255, 0.8);
+            cursor: pointer;
+        }
+        
+        button {
+            background: rgba(40, 40, 80, 0.6);
+            border: 1px solid rgba(100, 100, 255, 0.3);
+            color: rgba(180, 180, 255, 0.9);
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+        
+        button:hover {
+            background: rgba(60, 60, 120, 0.6);
+            border-color: rgba(120, 120, 255, 0.5);
+        }
+        
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 16px;
+            color: rgba(180, 180, 255, 0.7);
+            z-index: 2;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+        
+        .stats {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(150, 150, 255, 0.5);
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">Cosmic Gravity Playground</div>
+    <div class="stats" id="stats"></div>
+    <canvas id="canvas"></canvas>
+    
+    <div class="controls">
+        <div class="slider-container">
+            <label for="gravity">Gravity Strength</label>
+            <input type="range" id="gravity" min="0" max="1" step="0.01" value="0.3">
+        </div>
+        
+        <div class="slider-container">
+            <label for="particles">Particle Count</label>
+            <input type="range" id="particles" min="1000" max="10000" step="100" value="3000">
+        </div>
+        
+        <div class="slider-container">
+            <label for="particleSize">Particle Size</label>
+            <input type="range" id="particleSize" min="0.1" max="2" step="0.1" value="0.5">
+        </div>
+        
+        <div class="slider-container">
+            <label for="trailLength">Trail Length</label>
+            <input type="range" id="trailLength" min="5" max="50" step="1" value="20">
+        </div>
+        
+        <div class="slider-container">
+            <label for="fieldStrength">Field Strength</label>
+            <input type="range" id="fieldStrength" min="0" max="5" step="0.1" value="1">
+        </div>
+        
+        <button id="resetBtn">Reset Particles</button>
+        <button id="toggleGravity">Toggle Gravity</button>
+        <button id="addAttractor">Add Attractor</button>
+        <button id="clearAttractors">Clear Attractors</button>
+    </div>
+
+    <script>
+        // Initialize canvas
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Stats element
+        const statsElement = document.getElementById('stats');
+        
+        // Settings and controls
+        const settings = {
+            gravity: 0.3,
+            particleCount: 3000,
+            particleSize: 0.5,
+            trailLength: 20,
+            fieldStrength: 1,
+            gravityEnabled: true,
+            mouseX: canvas.width / 2,
+            mouseY: canvas.height / 2,
+            mouseRadius: 200,
+            mouseStrength: 1,
+            showStats: true,
+            frameCount: 0,
+            lastTime: performance.now(),
+            fps: 0
+        };
+        
+        // Particles array
+        let particles = [];
+        let attractors = [];
+        
+        // Event listeners for controls
+        document.getElementById('gravity').addEventListener('input', (e) => {
+            settings.gravity = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('particles').addEventListener('input', (e) => {
+            settings.particleCount = parseInt(e.target.value);
+            initParticles();
+        });
+        
+        document.getElementById('particleSize').addEventListener('input', (e) => {
+            settings.particleSize = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('trailLength').addEventListener('input', (e) => {
+            settings.trailLength = parseInt(e.target.value);
+            particles.forEach(p => {
+                p.trailLength = Math.floor(Math.random() * 10) + settings.trailLength;
+            });
+        });
+        
+        document.getElementById('fieldStrength').addEventListener('input', (e) => {
+            settings.fieldStrength = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            initParticles();
+        });
+        
+        document.getElementById('toggleGravity').addEventListener('click', () => {
+            settings.gravityEnabled = !settings.gravityEnabled;
+        });
+        
+        document.getElementById('addAttractor').addEventListener('click', () => {
+            if (attractors.length < 5) {
+                attractors.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    mass: Math.random() * 3 + 0.5,
+                    radius: Math.random() * 10 + 5,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5
+                });
+            }
+        });
+        
+        document.getElementById('clearAttractors').addEventListener('click', () => {
+            attractors = [];
+        });
+        
+        // Mouse interaction
+        canvas.addEventListener('mousemove', (e) => {
+            settings.mouseX = e.clientX;
+            settings.mouseY = e.clientY;
+        });
+        
+        // Double click to add attractor at mouse position
+        canvas.addEventListener('dblclick', (e) => {
+            if (attractors.length < 5) {
+                attractors.push({
+                    x: e.clientX,
+                    y: e.clientY,
+                    mass: Math.random() * 3 + 0.5,
+                    radius: Math.random() * 10 + 5,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5
+                });
+            }
+        });
+        
+        // Particle class
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * settings.particleSize + 0.1;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.brightness = Math.random() * 50 + 50;
+                this.trail = [];
+                this.trailLength = Math.floor(Math.random() * 10) + settings.trailLength;
+                this.alpha = Math.random() * 0.5 + 0.5;
+            }
+            
+            update() {
+                // Store position for trail
+                this.trail.push({x: this.x, y: this.y});
+                if (this.trail.length > this.trailLength) {
+                    this.trail.shift();
+                }
+                
+                // Apply gravity from attractors
+                if (settings.gravityEnabled) {
+                    // Mouse attractor
+                    const dx = settings.mouseX - this.x;
+                    const dy = settings.mouseY - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < settings.mouseRadius && distance > 5) {
+                        const force = settings.mouseStrength * settings.fieldStrength / distance;
+                        this.vx += dx * force * settings.gravity * 0.01;
+                        this.vy += dy * force * settings.gravity * 0.01;
+                    }
+                    
+                    // Other attractors
+                    attractors.forEach(attractor => {
+                        const dx = attractor.x - this.x;
+                        const dy = attractor.y - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance > attractor.radius && distance < 300) {
+                            const force = attractor.mass * settings.fieldStrength / (distance * 0.7);
+                            this.vx += dx * force * settings.gravity * 0.01;
+                            this.vy += dy * force * settings.gravity * 0.01;
+                        }
+                    });
+                }
+                
+                // Apply subtle random movement
+                if (Math.random() < 0.05) {
+                    this.vx += (Math.random() - 0.5) * 0.01;
+                    this.vy += (Math.random() - 0.5) * 0.01;
+                }
+                
+                // Apply velocity limits
+                const maxVelocity = 2;
+                const velocityMagnitude = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (velocityMagnitude > maxVelocity) {
+                    this.vx = (this.vx / velocityMagnitude) * maxVelocity;
+                    this.vy = (this.vy / velocityMagnitude) * maxVelocity;
+                }
+                
+                // Update position
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Boundary wrapping
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+            
+            draw() {
+                // Draw trail with fading effect
+                for (let i = 0; i < this.trail.length; i++) {
+                    const pos = this.trail[i];
+                    const alpha = (i / this.trail.length) * 0.3 * this.alpha;
+                    const size = this.size * (i / this.trail.length) * 0.8;
+                    
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${this.brightness + 50}, ${this.brightness + 100}, ${this.brightness + 150}, ${alpha})`;
+                    ctx.fill();
+                }
+                
+                // Draw particle
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${this.brightness + 100}, ${this.brightness + 150}, ${this.brightness + 200}, ${this.alpha})`;
+                ctx.fill();
+            }
+        }
+        
+        // Initialize particles
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < settings.particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+        
+        // Draw attractors
+        function drawAttractors() {
+            // Update attractor positions
+            attractors.forEach(attractor => {
+                attractor.x += attractor.vx;
+                attractor.y += attractor.vy;
+                
+                // Boundary bounce
+                if (attractor.x < attractor.radius || attractor.x > canvas.width - attractor.radius) {
+                    attractor.vx *= -1;
+                }
+                if (attractor.y < attractor.radius || attractor.y > canvas.height - attractor.radius) {
+                    attractor.vy *= -1;
+                }
+                
+                // Keep in bounds
+                attractor.x = Math.max(attractor.radius, Math.min(canvas.width - attractor.radius, attractor.x));
+                attractor.y = Math.max(attractor.radius, Math.min(canvas.height - attractor.radius, attractor.y));
+                
+                // Draw attractor
+                const gradient = ctx.createRadialGradient(
+                    attractor.x, attractor.y, 0,
+                    attractor.x, attractor.y, attractor.radius * 3
+                );
+                gradient.addColorStop(0, `rgba(150, 180, 255, ${0.1 * attractor.mass})`);
+                gradient.addColorStop(1, 'rgba(100, 120, 255, 0)');
+                
+                ctx.beginPath();
+                ctx.arc(attractor.x, attractor.y, attractor.radius * 3, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+            });
+            
+            // Draw mouse attractor if enabled
+            if (settings.gravityEnabled) {
+                const gradient = ctx.createRadialGradient(
+                    settings.mouseX, settings.mouseY, 0,
+                    settings.mouseX, settings.mouseY, settings.mouseRadius
+                );
+                gradient.addColorStop(0, 'rgba(150, 180, 255, 0.05)');
+                gradient.addColorStop(1, 'rgba(100, 120, 255, 0)');
+                
+                ctx.beginPath();
+                ctx.arc(settings.mouseX, settings.mouseY, settings.mouseRadius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+            }
+        }
+        
+        // Update stats
+        function updateStats() {
+            settings.frameCount++;
+            const now = performance.now();
+            const elapsed = now - settings.lastTime;
+            
+            if (elapsed >= 1000) {
+                settings.fps = Math.round((settings.frameCount * 1000) / elapsed);
+                settings.frameCount = 0;
+                settings.lastTime = now;
+                
+                statsElement.textContent = `FPS: ${settings.fps} | Particles: ${particles.length} | Attractors: ${attractors.length}`;
+            }
+        }
+        
+        // Create subtle background stars
+        function createBackgroundStars() {
+            const stars = [];
+            const starCount = 200;
+            
+            for (let i = 0; i < starCount; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 0.5 + 0.1,
+                    brightness: Math.random() * 50 + 20
+                });
+            }
+            
+            return stars;
+        }
+        
+        // Draw background stars
+        function drawBackgroundStars(stars) {
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${star.brightness + 150}, ${star.brightness + 150}, ${star.brightness + 200}, ${Math.random() * 0.3 + 0.7})`;
+                ctx.fill();
+            });
+        }
+        
+        // Create background stars
+        const backgroundStars = createBackgroundStars();
+        
+        // Animation loop
+        function animate() {
+            // Clear canvas with fade effect
+            ctx.fillStyle = 'rgba(5, 5, 16, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background stars
+            drawBackgroundStars(backgroundStars);
+            
+            // Draw subtle cosmic fog
+            const time = Date.now() * 0.0001;
+            for (let i = 0; i < 3; i++) {
+                const x = canvas.width * 0.5 + Math.cos(time * (0.5 + i * 0.2)) * canvas.width * 0.3;
+                const y = canvas.height * 0.5 + Math.sin(time * (0.3 + i * 0.2)) * canvas.height * 0.3;
+                const radius = 100 + Math.sin(time * 0.5) * 50;
+                
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                gradient.addColorStop(0, `rgba(20, 30, 80, 0.01)`);
+                gradient.addColorStop(1, `rgba(10, 20, 50, 0)`);
+                
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+            }
+            
+            // Draw attractors
+            drawAttractors();
+            
+            // Update and draw particles
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            
+            // Update stats
+            updateStats();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        // Initialize and start animation
+        initParticles();
+        animate();
+    </script>
+</body>
+</html>
