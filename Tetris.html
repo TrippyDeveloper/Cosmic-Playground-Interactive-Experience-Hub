@@ -226,6 +226,13 @@
 </head>
 <body>
     <div id="game-container">
+        <!-- Home Button -->
+        <a href="index.html" class="lsd-home-button">
+          <svg viewBox="0 0 64 64" class="home-icon" xmlns="http://www.w3.org/2000/svg">
+            <path d="M32 12l22 22h-6v18h-12v-12h-8v12h-12v-18h-6z"/>
+          </svg>
+        </a>
+        
         <canvas id="background-canvas"></canvas>
         <canvas id="game-canvas"></canvas>
         
@@ -313,7 +320,6 @@
                 '#0000FF', // Blue
                 '#FF8800'  // Orange
             ];
-
 
             // Game variables
             let canvas, ctx;
@@ -723,7 +729,7 @@
                 return false; // No collision
             }
 
-             function lockPiece() {
+            function lockPiece() {
                 const shape = currentPiece.shape;
                 const pieceX = currentPiece.x;
                 const pieceY = currentPiece.y;
@@ -1391,3 +1397,5 @@
             init();
         });
     </script>
+</body>
+</html>
