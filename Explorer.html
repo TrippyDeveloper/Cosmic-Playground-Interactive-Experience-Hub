@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fractal Explorer - Simtheory</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        header {
+            background-color: #1a1a1a;
+            padding: 15px 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+            background: linear-gradient(45deg, #ff00cc, #3333ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .subtitle {
+            font-style: italic;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            position: relative;
+        }
+        
+        #fractalCanvas {
+            flex: 1;
+            background-color: #000;
+            cursor: move;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(26, 26, 26, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            width: 250px;
+            z-index: 5;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        select, input[type="range"], input[type="color"], button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            border: 1px solid #333;
+            background-color: #2a2a2a;
+            color: #f0f0f0;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #ff00cc, #3333ff);
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .color-pickers {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .color-picker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 48%;
+        }
+        
+        .color-picker label {
+            margin-bottom: 5px;
+        }
+        
+        .info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(26, 26, 26, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 100;
+        }
+        
+        .zoom-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(26, 26, 26, 0.8);
+            padding: 10px;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            z-index: 5;
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 100px;
+            display: flex;
+            flex-direction: column;
+            z-index: 5;
+        }
+        
+        .zoom-btn {
+            background-color: rgba(26, 26, 26, 0.8);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .zoom-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+        
+        .preset-locations {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .preset-btn {
+            padding: 8px;
+            font-size: 0.8rem;
+        }
+        
+        .animation-controls {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .animation-btn {
+            width: 48%;
+            font-size: 0.9rem;
+        }
+        
+        .help-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .help-content {
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .help-content h2 {
+            color: #ff00cc;
+            margin-top: 0;
+        }
+        
+        .help-content ul {
+            padding-left: 20px;
+        }
+        
+        .help-content li {
+            margin-bottom: 10px;
+        }
+        
+        .close-help {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+        
+        .keyboard-shortcut {
+            background-color: #2a2a2a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 0 3px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Fractal Explorer</h1>
+        <div class="subtitle">Generate and explore infinite fractal patterns</div>
+    </header>
+    
+    <div class="container">
+        <canvas id="fractalCanvas"></canvas>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="fractalType">Fractal Type:</label>
+                <select id="fractalType">
+                    <option value="mandelbrot">Mandelbrot Set</option>
+                    <option value="julia">Julia Set</option>
+                    <option value="burningShip">Burning Ship</option>
+                    <option value="tricorn">Tricorn</option>
+                </select>
+            </div>
+            
+            <div class="control-group" id="juliaParamsContainer" style="display: none;">
+                <label>Julia Parameters:</label>
+                <div>
+                    <label for="juliaReal">Real: <span id="juliaRealValue">0</span></label>
+                    <input type="range" id="juliaReal" min="-2" max="2" step="0.01" value="0">
+                </div>
+                <div>
+                    <label for="juliaImag">Imaginary: <span id="juliaImagValue">0</span></label>
+                    <input type="range" id="juliaImag" min="-2" max="2" step="0.01" value="0">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label for="iterations">Max Iterations: <span id="iterationsValue">100</span></label>
+                <input type="range" id="iterations" min="50" max="2000" step="50" value="100">
+            </div>
+            
+            <div class="control-group">
+                <label for="colorScheme">Color Scheme:</label>
+                <select id="colorScheme">
+                    <option value="rainbow">Rainbow</option>
+                    <option value="fire">Fire</option>
+                    <option value="ocean">Ocean</option>
+                    <option value="psychedelic">Psychedelic</option>
+                    <option value="grayscale">Grayscale</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            
+            <div class="control-group" id="customColorContainer" style="display: none;">
+                <label>Custom Colors:</label>
+                <div class="color-pickers">
+                    <div class="color-picker">
+                        <label for="color1">Start:</label>
+                        <input type="color" id="color1" value="#ff0000">
+                    </div>
+                    <div class="color-picker">
+                        <label for="color2">End:</label>
+                        <input type="color" id="color2" value="#0000ff">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Interesting Locations:</label>
+                <div class="preset-locations">
+                    <button class="preset-btn" data-type="mandelbrot" data-x="-0.7453" data-y="0.1127" data-zoom="6.5">Seahorse Valley</button>
+                    <button class="preset-btn" data-type="mandelbrot" data-x="-1.25066" data-y="0.02012" data-zoom="90">Elephant Valley</button>
+                    <button class="preset-btn" data-type="mandelbrot" data-x="-0.16" data-y="1.0405" data-zoom="200">Tentacles</button>
+                    <button class="preset-btn" data-type="julia" data-x="0" data-y="0" data-zoom="1" data-jr="-0.8" data-ji="0.156">Julia Dendrite</button>
+                    <button class="preset-btn" data-type="burningShip" data-x="-1.75" data-y="-0.03" data-zoom="15">Burning Ship</button>
+                    <button class="preset-btn" data-type="tricorn" data-x="0" data-y="0" data-zoom="1.5">Tricorn Center</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Animation:</label>
+                <div class="animation-controls">
+                    <button class="animation-btn" id="animateZoom">Zoom Journey</button>
+                    <button class="animation-btn" id="animateColors">Color Cycle</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <button id="resetView">Reset View</button>
+                <button id="downloadImage">Download Image</button>
+                <button id="showHelp">Help / Controls</button>
+            </div>
+        </div>
+        
+        <div class="info">
+            <div>Zoom: <span id="zoomLevel">1.0</span>x</div>
+            <div>Position: (<span id="positionX">0</span>, <span id="positionY">0</span>)</div>
+            <div>Controls: Drag to pan, scroll to zoom</div>
+        </div>
+        
+        <div class="zoom-indicator">1x</div>
+        
+        <div class="zoom-controls">
+            <div class="zoom-btn" id="zoomIn">+</div>
+            <div class="zoom-btn" id="zoomOut">-</div>
+        </div>
+        
+        <div class="loading" id="loadingIndicator" style="display: none;">
+            Rendering fractal... Please wait.
+        </div>
+        
+        <div class="tooltip" id="tooltip"></div>
+        
+        <div class="help-overlay" id="helpOverlay">
+            <button class="close-help" id="closeHelp">×</button>
+            <div class="help-content">
+                <h2>Fractal Explorer Controls</h2>
+                <ul>
+                    <li><strong>Mouse Controls:</strong>
+                        <ul>
+                            <li>Click and drag to pan around the fractal</li>
+                            <li>Scroll wheel to zoom in and out</li>
+                            <li>Double-click to zoom in at a specific point</li>
+                        </ul>
+                    </li>
+                    <li><strong>Keyboard Shortcuts:</strong>
+                        <ul>
+                            <li><span class="keyboard-shortcut">+</span> or <span class="keyboard-shortcut">]</span> - Zoom in</li>
+                            <li><span class="keyboard-shortcut">-</span> or <span class="keyboard-shortcut">[</span> - Zoom out</li>
+                            <li><span class="keyboard-shortcut">Arrow Keys</span> - Pan around</li>
+                            <li><span class="keyboard-shortcut">R</span> - Reset view</li>
+                            <li><span class="keyboard-shortcut">S</span> - Save image</li>
+                            <li><span class="keyboard-shortcut">H</span> - Toggle this help</li>
+                            <li><span class="keyboard-shortcut">1-4</span> - Switch between fractal types</li>
+                        </ul>
+                    </li>
+                    <li><strong>Fractal Types:</strong>
+                        <ul>
+                            <li><strong>Mandelbrot Set:</strong> The classic fractal based on the equation z = z² + c</li>
+                            <li><strong>Julia Set:</strong> Related to the Mandelbrot set but with a fixed complex parameter</li>
+                            <li><strong>Burning Ship:</strong> A variation that uses the absolute values in the calculation</li>
+                            <li><strong>Tricorn:</strong> Also known as the Mandelbar, uses complex conjugation</li>
+                        </ul>
+                    </li>
+                    <li><strong>Tips:</strong>
+                        <ul>
+                            <li>Higher iteration values give more detail but render slower</li>
+                            <li>Try different color schemes to reveal different patterns</li>
+                            <li>Explore the preset locations to find interesting patterns</li>
+                            <li>The Julia set changes dramatically with different parameters</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Main Fractal Explorer script
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get UI elements
+            const canvas = document.getElementById('fractalCanvas');
+            const ctx = canvas.getContext('2d');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const fractalTypeSelect = document.getElementById('fractalType');
+            const iterationsSlider = document.getElementById('iterations');
+            const iterationsValue = document.getElementById('iterationsValue');
+            const colorSchemeSelect = document.getElementById('colorScheme');
+            const customColorContainer = document.getElementById('customColorContainer');
+            const color1Input = document.getElementById('color1');
+            const color2Input = document.getElementById('color2');
+            const resetViewButton = document.getElementById('resetView');
+            const downloadButton = document.getElementById('downloadImage');
+            const zoomLevelDisplay = document.getElementById('zoomLevel');
+            const positionXDisplay = document.getElementById('positionX');
+            const positionYDisplay = document.getElementById('positionY');
+            const juliaParamsContainer = document.getElementById('juliaParamsContainer');
+            const juliaRealSlider = document.getElementById('juliaReal');
+            const juliaImagSlider = document.getElementById('juliaImag');
+            const juliaRealValue = document.getElementById('juliaRealValue');
+            const juliaImagValue = document.getElementById('juliaImagValue');
+            const zoomIndicator = document.querySelector('.zoom-indicator');
+            const zoomInButton = document.getElementById('zoomIn');
+            const zoomOutButton = document.getElementById('zoomOut');
+            const presetButtons = document.querySelectorAll('.preset-btn');
+            const animateZoomButton = document.getElementById('animateZoom');
+            const animateColorsButton = document.getElementById('animateColors');
+            const tooltip = document.getElementById('tooltip');
+            const showHelpButton = document.getElementById('showHelp');
+            const helpOverlay = document.getElementById('helpOverlay');
+            const closeHelpButton = document.getElementById('closeHelp');
+            
+            // Set canvas to full container size
+            function resizeCanvas() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+                drawFractal();
+            }
+            
+            // Initial resize and event listener for window resize
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Fractal parameters
+            let fractalType = 'mandelbrot';
+            let maxIterations = 100;
+            let colorScheme = 'rainbow';
+            let juliaReal = 0;
+            let juliaImag = 0;
+            let customColor1 = '#ff0000';
+            let customColor2 = '#0000ff';
+            
+            // View parameters
+            let centerX = 0;
+            let centerY = 0;
+            let zoom = 1.0;
+            
+            // Animation parameters
+            let isZoomAnimating = false;
+            let isColorAnimating = false;
+            let animationFrame = null;
+            let colorCyclePhase = 0;
+            
+            // Mouse interaction variables
+            let isDragging = false;
+            let lastMouseX = 0;
+            let lastMouseY = 0;
+            
+            // Event listeners for controls
+            fractalTypeSelect.addEventListener('change', function() {
+                fractalType = this.value;
+                juliaParamsContainer.style.display = fractalType === 'julia' ? 'block' : 'none';
+                drawFractal();
+            });
+            
+            iterationsSlider.addEventListener('input', function() {
+                maxIterations = parseInt(this.value);
+                iterationsValue.textContent = maxIterations;
+                drawFractal();
+            });
+            
+            colorSchemeSelect.addEventListener('change', function() {
+                colorScheme = this.value;
+                customColorContainer.style.display = colorScheme === 'custom' ? 'block' : 'none';
+                drawFractal();
+            });
+            
+            color1Input.addEventListener('change', function() {
+                customColor1 = this.value;
+                drawFractal();
+            });
+            
+            color2Input.addEventListener('change', function() {
+                customColor2 = this.value;
+                drawFractal();
+            });
+            
+            juliaRealSlider.addEventListener('input', function() {
+                juliaReal = parseFloat(this.value);
+                juliaRealValue.textContent = juliaReal.toFixed(2);
+                if (fractalType === 'julia') {
+                    drawFractal();
+                }
+            });
+            
+            juliaImagSlider.addEventListener('input', function() {
+                juliaImag = parseFloat(this.value);
+                juliaImagValue.textContent = juliaImag.toFixed(2);
+                if (fractalType === 'julia') {
+                    drawFractal();
+                }
+            });
+            
+            resetViewButton.addEventListener('click', function() {
+                centerX = 0;
+                centerY = 0;
+                zoom = 1.0;
+                updateInfoDisplay();
+                drawFractal();
+            });
+            
+            downloadButton.addEventListener('click', function() {
+                const link = document.createElement('a');
+                link.download = `${fractalType}-fractal.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+            
+            zoomInButton.addEventListener('click', function() {
+                zoomAt(canvas.width / 2, canvas.height / 2, 1.5);
+            });
+            
+            zoomOutButton.addEventListener('click', function() {
+                zoomAt(canvas.width / 2, canvas.height / 2, 1/1.5);
+            });
+            
+            // Preset location buttons
+            presetButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const type = this.dataset.type;
+                    const x = parseFloat(this.dataset.x);
+                    const y = parseFloat(this.dataset.y);
+                    const z = parseFloat(this.dataset.zoom);
+                    
+                    fractalType = type;
+                    fractalTypeSelect.value = type;
+                    centerX = x;
+                    centerY = y;
+                    zoom = z;
+                    
+                    if (type === 'julia' && this.dataset.jr && this.dataset.ji) {
+                        juliaReal = parseFloat(this.dataset.jr);
+                        juliaImag = parseFloat(this.dataset.ji);
+                        juliaRealSlider.value = juliaReal;
+                        juliaImagSlider.value = juliaImag;
+                        juliaRealValue.textContent = juliaReal.toFixed(2);
+                        juliaImagValue.textContent = juliaImag.toFixed(2);
+                    }
+                    
+                    juliaParamsContainer.style.display = type === 'julia' ? 'block' : 'none';
+                    
+                    updateInfoDisplay();
+                    drawFractal();
+                });
+                
+                // Add tooltips to preset buttons
+                button.addEventListener('mouseenter', function(e) {
+                    tooltip.textContent = `${this.textContent}: ${this.dataset.type} at (${this.dataset.x}, ${this.dataset.y}) with ${this.dataset.zoom}x zoom`;
+                    tooltip.style.left = `${e.pageX + 10}px`;
+                    tooltip.style.top = `${e.pageY + 10}px`;
+                    tooltip.style.opacity = 1;
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    tooltip.style.opacity = 0;
+                });
+                
+                button.addEventListener('mousemove', function(e) {
+                    tooltip.style.left = `${e.pageX + 10}px`;
+                    tooltip.style.top = `${e.pageY + 10}px`;
+                });
+            });
+            
+            // Animation buttons
+            animateZoomButton.addEventListener('click', function() {
+                if (isZoomAnimating) {
+                    stopZoomAnimation();
+                    this.textContent = 'Zoom Journey';
+                } else {
+                    startZoomAnimation();
+                    this.textContent = 'Stop Zoom';
+                }
+            });
+            
+            animateColorsButton.addEventListener('click', function() {
+                if (isColorAnimating) {
+                    stopColorAnimation();
+                    this.textContent = 'Color Cycle';
+                } else {
+                    startColorAnimation();
+                    this.textContent = 'Stop Colors';
+                }
+            });
+            
+            // Help overlay
+            showHelpButton.addEventListener('click', function() {
+                helpOverlay.style.display = 'flex';
+            });
+            
+            closeHelpButton.addEventListener('click', function() {
+                helpOverlay.style.display = 'none';
+            });
+            
+            // Mouse event handlers for pan and zoom
+            canvas.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                canvas.style.cursor = 'grabbing';
+            });
+            
+            canvas.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    const deltaX = e.clientX - lastMouseX;
+                    const deltaY = e.clientY - lastMouseY;
+                    
+                    // Convert screen coordinates to fractal coordinates based on zoom level
+                    const fractalDeltaX = deltaX / (canvas.width * zoom);
+                    const fractalDeltaY = deltaY / (canvas.height * zoom);
+                    
+                    centerX -= fractalDeltaX * 4; // Scale factor for better control
+                    centerY += fractalDeltaY * 4; // Y is inverted in screen coordinates
+                    
+                    lastMouseX = e.clientX;
+                    lastMouseY = e.clientY;
+                    
+                    updateInfoDisplay();
+                    drawFractal();
+                }
+            });
+            
+            canvas.addEventListener('mouseup', function() {
+                isDragging = false;
+                canvas.style.cursor = 'move';
+            });
+            
+            canvas.addEventListener('mouseleave', function() {
+                isDragging = false;
+                canvas.style.cursor = 'move';
+            });
+            
+            canvas.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                
+                // Get mouse position relative to canvas
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                // Determine zoom factor based on scroll direction
+                const zoomFactor = e.deltaY < 0 ? 1.2 : 1/1.2;
+                
+                zoomAt(mouseX, mouseY, zoomFactor);
+            });
+            
+            // Double click to zoom in at a specific point
+            canvas.addEventListener('dblclick', function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                zoomAt(mouseX, mouseY, 2.5);
+            });
+            
+            // Keyboard controls
+            document.addEventListener('keydown', function(e) {
+                const panStep = 0.1 / zoom;
+                
+                switch(e.key) {
+                    case '+':
+                    case ']':
+                        zoomAt(canvas.width / 2, canvas.height / 2, 1.2);
+                        break;
+                    case '-':
+                    case '[':
+                        zoomAt(canvas.width / 2, canvas.height / 2, 1/1.2);
+                        break;
+                    case 'ArrowLeft':
+                        centerX -= panStep;
+                        updateInfoDisplay();
+                        drawFractal();
+                        break;
+                    case 'ArrowRight':
+                        centerX += panStep;
+                        updateInfoDisplay();
+                        drawFractal();
+                        break;
+                    case 'ArrowUp':
+                        centerY -= panStep;
+                        updateInfoDisplay();
+                        drawFractal();
+                        break;
+                    case 'ArrowDown':
+                        centerY += panStep;
+                        updateInfoDisplay();
+                        drawFractal();
+                        break;
+                    case 'r':
+                    case 'R':
+                        centerX = 0;
+                        centerY = 0;
+                        zoom = 1.0;
+                        updateInfoDisplay();
+                        drawFractal();
+                        break;
+                    case 's':
+                    case 'S':
+                        downloadButton.click();
+                        break;
+                    case 'h':
+                    case 'H':
+                        helpOverlay.style.display = helpOverlay.style.display === 'flex' ? 'none' : 'flex';
+                        break;
+                    case '1':
+                        fractalType = 'mandelbrot';
+                        fractalTypeSelect.value = fractalType;
+                        juliaParamsContainer.style.display = 'none';
+                        drawFractal();
+                        break;
+                    case '2':
+                        fractalType = 'julia';
+                        fractalTypeSelect.value = fractalType;
+                        juliaParamsContainer.style.display = 'block';
+                        drawFractal();
+                        break;
+                    case '3':
+                        fractalType = 'burningShip';
+                        fractalTypeSelect.value = fractalType;
+                        juliaParamsContainer.style.display = 'none';
+                        drawFractal();
+                        break;
+                    case '4':
+                        fractalType = 'tricorn';
+                        fractalTypeSelect.value = fractalType;
+                        juliaParamsContainer.style.display = 'none';
+                        drawFractal();
+                        break;
+                }
+            });
+            
+            // Helper function to zoom at a specific point
+            function zoomAt(x, y, zoomFactor) {
+                // Convert to fractal coordinates before zoom
+                const fractalX = centerX + (x / canvas.width - 0.5) * 4 / zoom;
+                const fractalY = centerY - (y / canvas.height - 0.5) * 4 / zoom;
+                
+                // Adjust zoom level
+                zoom *= zoomFactor;
+                
+                // Recalculate center to zoom toward mouse position
+                centerX = fractalX - (x / canvas.width - 0.5) * 4 / zoom;
+                centerY = fractalY + (y / canvas.height - 0.5) * 4 / zoom;
+                
+                updateInfoDisplay();
+                drawFractal();
+                
+                // Animate zoom indicator
+                zoomIndicator.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    zoomIndicator.style.transform = 'scale(1)';
+                }, 200);
+            }
+            
+            // Animation functions
+            function startZoomAnimation() {
+                if (isZoomAnimating) return;
+                
+                isZoomAnimating = true;
+                let targetX, targetY, targetZoom;
+                
+                // Choose a random interesting point to zoom into
+                const zoomTargets = [
+                    { x: -0.7453, y: 0.1127, zoom: 50 },
+                    { x: -1.25066, y: 0.02012, zoom: 100 },
+                    { x: -0.16, y: 1.0405, zoom: 150 },
+                    { x: -0.745428, y: 0.113009, zoom: 200 },
+                    { x: -0.235125, y: 0.827215, zoom: 80 }
+                ];
+                
+                const target = zoomTargets[Math.floor(Math.random() * zoomTargets.length)];
+                targetX = target.x;
+                targetY = target.y;
+                targetZoom = target.zoom;
+                
+                const startX = centerX;
+                const startY = centerY;
+                const startZoom = zoom;
+                const duration = 10000; // 10 seconds
+                const startTime = Date.now();
+                
+                function animateZoom() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Ease in-out function
+                    const easeProgress = progress < 0.5 
+                        ? 2 * progress * progress 
+                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                    
+                    centerX = startX + (targetX - startX) * easeProgress;
+                    centerY = startY + (targetY - startY) * easeProgress;
+                    zoom = startZoom * Math.pow(targetZoom / startZoom, easeProgress);
+                    
+                    updateInfoDisplay();
+                    drawFractal();
+                    
+                    if (progress < 1 && isZoomAnimating) {
+                        animationFrame = requestAnimationFrame(animateZoom);
+                    } else {
+                        isZoomAnimating = false;
+                        animateZoomButton.textContent = 'Zoom Journey';
+                    }
+                }
+                
+                animateZoom();
+            }
+            
+            function stopZoomAnimation() {
+                isZoomAnimating = false;
+                if (animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                }
+            }
+            
+            function startColorAnimation() {
+                if (isColorAnimating) return;
+                
+                isColorAnimating = true;
+                colorCyclePhase = 0;
+                
+                function animateColors() {
+                    colorCyclePhase += 0.01;
+                    if (colorCyclePhase > 1) colorCyclePhase = 0;
+                    
+                    drawFractal();
+                    
+                    if (isColorAnimating) {
+                        animationFrame = requestAnimationFrame(animateColors);
+                    }
+                }
+                
+                animateColors();
+            }
+            
+            function stopColorAnimation() {
+                isColorAnimating = false;
+                if (animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                }
+            }
+            
+            // Update information display
+            function updateInfoDisplay() {
+                zoomLevelDisplay.textContent = zoom.toFixed(2);
+                zoomIndicator.textContent = `${zoom.toFixed(1)}x`;
+                positionXDisplay.textContent = centerX.toFixed(4);
+                positionYDisplay.textContent = centerY.toFixed(4);
+            }
+            
+            // Color mapping functions
+            function mapColor(iteration, maxIterations) {
+                if (iteration === maxIterations) {
+                    return [0, 0, 0]; // Black for points in the set
+                }
+                
+                let normalized = iteration / maxIterations;
+                
+                // Apply color cycling animation if active
+                if (isColorAnimating) {
+                    normalized = (normalized + colorCyclePhase) % 1;
+                }
+                
+                switch (colorScheme) {
+                    case 'rainbow':
+                        return hsvToRgb(normalized * 360, 1, 1);
+                    case 'fire':
+                        return [
+                            Math.floor(255 * Math.min(1, normalized * 3)),
+                            Math.floor(255 * Math.min(1, normalized * 2)),
+                            Math.floor(255 * Math.max(0, normalized - 0.5) * 2)
+                        ];
+                    case 'ocean':
+                        return [
+                            Math.floor(255 * Math.max(0, normalized - 0.5) * 2),
+                            Math.floor(255 * Math.min(1, normalized * 2)),
+                            Math.floor(255 * Math.min(1, normalized * 3))
+                        ];
+                    case 'psychedelic':
+                        // More vibrant, trippy colors
+                        const angle = normalized * Math.PI * 2;
+                        return [
+                            Math.floor(255 * (0.5 + 0.5 * Math.sin(angle * 3))),
+                            Math.floor(255 * (0.5 + 0.5 * Math.sin(angle * 5 + Math.PI/3))),
+                            Math.floor(255 * (0.5 + 0.5 * Math.sin(angle * 7 + Math.PI*2/3)))
+                        ];
+                    case 'grayscale':
+                        const value = Math.floor(255 * normalized);
+                        return [value, value, value];
+                    case 'custom':
+                        // Interpolate between two custom colors
+                        const color1 = hexToRgb(customColor1);
+                        const color2 = hexToRgb(customColor2);
+                        return [
+                            Math.floor(color1[0] + (color2[0] - color1[0]) * normalized),
+                            Math.floor(color1[1] + (color2[1] - color1[1]) * normalized),
+                            Math.floor(color1[2] + (color2[2] - color1[2]) * normalized)
+                        ];
+                    default:
+                        return [0, 0, 0];
+                }
+            }
+            
+            // Helper function to convert HSV to RGB
+            function hsvToRgb(h, s, v) {
+                let r, g, b;
+                const i = Math.floor(h / 60) % 6;
+                const f = h / 60 - Math.floor(h / 60);
+                const p = v * (1 - s);
+                const q = v * (1 - f * s);
+                const t = v * (1 - (1 - f) * s);
+                
+                switch (i) {
+                    case 0: r = v; g = t; b = p; break;
+                    case 1: r = q; g = v; b = p; break;
+                    case 2: r = p; g = v; b = t; break;
+                    case 3: r = p; g = q; b = v; break;
+                    case 4: r = t; g = p; b = v; break;
+                    case 5: r = v; g = p; b = q; break;
+                }
+                
+                return [Math.floor(r * 255), Math.floor(g * 255), Math.floor(b * 255)];
+            }
+            
+            // Helper function to convert hex color to RGB
+            function hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? [
+                    parseInt(result[1], 16),
+                    parseInt(result[2], 16),
+                    parseInt(result[3], 16)
+                ] : [0, 0, 0];
+            }
+            
+            // Fractal calculation functions
+            function calculateMandelbrot(x0, y0, maxIter) {
+                let x = 0;
+                let y = 0;
+                let iteration = 0;
+                let xsq = 0;
+                let ysq = 0;
+                
+                while (xsq + ysq <= 4 && iteration < maxIter) {
+                    y = 2 * x * y + y0;
+                    x = xsq - ysq + x0;
+                    xsq = x * x;
+                    ysq = y * y;
+                    iteration++;
+                }
+                
+                // Smooth coloring formula
+                if (iteration < maxIter) {
+                    const log_zn = Math.log(xsq + ysq) / 2;
+                    const nu = Math.log(log_zn / Math.log(2)) / Math.log(2);
+                    iteration = iteration + 1 - nu;
+                }
+                
+                return iteration;
+            }
+            
+            function calculateJulia(x0, y0, maxIter) {
+                let x = x0;
+                let y = y0;
+                let iteration = 0;
+                let xsq = x * x;
+                let ysq = y * y;
+                
+                while (xsq + ysq <= 4 && iteration < maxIter) {
+                    y = 2 * x * y + juliaImag;
+                    x = xsq - ysq + juliaReal;
+                    xsq = x * x;
+                    ysq = y * y;
+                    iteration++;
+                }
+                
+                // Smooth coloring formula
+                if (iteration < maxIter) {
+                    const log_zn = Math.log(xsq + ysq) / 2;
+                    const nu = Math.log(log_zn / Math.log(2)) / Math.log(2);
+                    iteration = iteration + 1 - nu;
+                }
+                
+                return iteration;
+            }
+            
+            function calculateBurningShip(x0, y0, maxIter) {
+                let x = 0;
+                let y = 0;
+                let iteration = 0;
+                let xsq = 0;
+                let ysq = 0;
+                
+                while (xsq + ysq <= 4 && iteration < maxIter) {
+                    y = Math.abs(2 * x * y) + y0;
+                    x = xsq - ysq + x0;
+                    xsq = x * x;
+                    ysq = y * y;
+                    iteration++;
+                }
+                
+                return iteration;
+            }
+            
+            function calculateTricorn(x0, y0, maxIter) {
+                let x = 0;
+                let y = 0;
+                let iteration = 0;
+                let xsq = 0;
+                let ysq = 0;
+                
+                while (xsq + ysq <= 4 && iteration < maxIter) {
+                    y = -2 * x * y + y0;
+                    x = xsq - ysq + x0;
+                    xsq = x * x;
+                    ysq = y * y;
+                    iteration++;
+                }
+                
+                return iteration;
+            }
+            
+            // Main drawing function
+            function drawFractal() {
+                loadingIndicator.style.display = 'block';
+                
+                // Use requestAnimationFrame to allow the loading indicator to appear
+                requestAnimationFrame(() => {
+                    const width = canvas.width;
+                    const height = canvas.height;
+                    const imageData = ctx.createImageData(width, height);
+                    const data = imageData.data;
+                    
+                    // Scale factor for aspect ratio correction
+                    const aspectRatio = width / height;
+                    const scaleFactor = 4.0 / zoom;
+                    
+                    // Calculate each pixel
+                    for (let y = 0; y < height; y++) {
+                        for (let x = 0; x < width; x++) {
+                            // Map pixel coordinates to fractal coordinates
+                            const fractalX = centerX + (x / width - 0.5) * scaleFactor;
+                            const fractalY = centerY - (y / height - 0.5) * scaleFactor / aspectRatio;
+                            
+                            // Calculate fractal value based on selected type
+                            let iteration;
+                            switch (fractalType) {
+                                case 'mandelbrot':
+                                    iteration = calculateMandelbrot(fractalX, fractalY, maxIterations);
+                                    break;
+                                case 'julia':
+                                    iteration = calculateJulia(fractalX, fractalY, maxIterations);
+                                    break;
+                                case 'burningShip':
+                                    iteration = calculateBurningShip(fractalX, fractalY, maxIterations);
+                                    break;
+                                case 'tricorn':
+                                    iteration = calculateTricorn(fractalX, fractalY, maxIterations);
+                                    break;
+                                default:
+                                    iteration = calculateMandelbrot(fractalX, fractalY, maxIterations);
+                            }
+                            
+                            // Map iteration count to color
+                            const color = mapColor(iteration, maxIterations);
+                            
+                            // Set pixel color in image data
+                            const pixelIndex = (y * width + x) * 4;
+                            data[pixelIndex] = color[0];     // R
+                            data[pixelIndex + 1] = color[1]; // G
+                            data[pixelIndex + 2] = color[2]; // B
+                            data[pixelIndex + 3] = 255;      // A (fully opaque)
+                        }
+                    }
+                    
+                    // Draw the image data to the canvas
+                    ctx.putImageData(imageData, 0, 0);
+                    loadingIndicator.style.display = 'none';
+                });
+            }
+            
+            // Set initial cursor style
+            canvas.style.cursor = 'move';
+            
+            // Initial draw
+            drawFractal();
+        });
+    </script>
+</body>
+</html>
