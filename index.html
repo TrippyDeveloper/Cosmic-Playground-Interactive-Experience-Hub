@@ -386,16 +386,16 @@
           <a href="Breaker.html" class="glow-button">PLAY</a>
         </div>
         <div class="item-card" data-type="puzzle" style="--delay: 3">
-          <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=trippy%20tic-tac-toe%20game%20with%20psychedelic%20colors&w=600&h=400&style=realistic')"></div>
+          <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=psychedelic%20tic%20tac%20toe%20board%20with%20vivid%20colors&w=600&h=400&style=realistic')"></div>
           <h3>Trippy Tic-Tac-Toe</h3>
           <p>Psychedelic twist on the classic game of tic-tac-toe</p>
           <a href="Tic-Tac-Toe.html" class="glow-button">PLAY</a>
         </div>
         <div class="item-card" data-type="strategy" style="--delay: 4">
           <div class="item-image" style="--bg-image: url('https://cdn.simulationtheory.ai/gasset/?asset=img&prompt=classic%20chess%20game%20with%20a%20cosmic%20twist&w=600&h=400&style=realistic')"></div>
-          <h3>Chess</h3>
+          <h3>Surreal Chess</h3>
           <p>Traditional strategy game with a cosmic twist</p>
-          <a href="Chess.html" class="glow-button">PLAY</a>
+          <a href="chess.html" class="glow-button">PLAY</a>
         </div>
         <div class="item-card" data-type="placeholder" style="--delay: 5">
           <div class="item-image" style="--bg-image: url('https://via.placeholder.com/600x400.png?text=Placeholder+Game+1')"></div>
@@ -769,7 +769,7 @@
         }, i * 100);
       }
       
-      // Add sound effect to buttons
+      // Add sound effect to buttons and navigate if href is set
       const buttons = document.querySelectorAll('.glow-button');
       buttons.forEach(button => {
         button.addEventListener('click', function(e) {
@@ -791,10 +791,17 @@
             }, i * 30);
           }
           
-          // Simulate navigation (in a real app, you'd navigate to the actual page)
-          setTimeout(() => {
-            alert('This would navigate to: ' + this.textContent + ' experience');
-          }, 500);
+          // If the href is valid, navigate to it
+          const href = this.getAttribute('href');
+          if (href && href !== "#") {
+            setTimeout(() => {
+              window.location.href = href;
+            }, 500);
+          } else {
+            setTimeout(() => {
+              alert('This would navigate to: ' + this.textContent + ' experience');
+            }, 500);
+          }
         });
       });
     });
