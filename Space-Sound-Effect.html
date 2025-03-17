@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Sound Effect Interactive</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 20px;
+            z-index: 1;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+            color: #8be9fd;
+            text-shadow: 0 0 10px #8be9fd;
+        }
+        
+        p {
+            font-size: 1.2em;
+            margin-top: 0;
+            color: #f8f8f2;
+        }
+        
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            padding: 20px;
+        }
+        
+        .sound-panel {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1000px;
+            margin-bottom: 30px;
+        }
+        
+        .sound-card {
+            background: rgba(40, 42, 54, 0.8);
+            border: 1px solid #6272a4;
+            border-radius: 10px;
+            padding: 15px;
+            width: 200px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(98, 114, 164, 0.5);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .sound-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(139, 233, 253, 0.8);
+        }
+        
+        .sound-card.active {
+            border-color: #ff79c6;
+            box-shadow: 0 0 20px rgba(255, 121, 198, 0.8);
+        }
+        
+        .sound-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sound-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sound-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #f8f8f2;
+        }
+        
+        .sound-description {
+            font-size: 0.85em;
+            color: #d7d7d7;
+            margin-bottom: 15px;
+            min-height: 40px;
+        }
+        
+        button {
+            background: #6272a4;
+            color: #f8f8f2;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+            margin-top: auto;
+        }
+        
+        button:hover {
+            background: #ff79c6;
+        }
+        
+        .mixer-panel {
+            background: rgba(40, 42, 54, 0.8);
+            border: 1px solid #6272a4;
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 0 15px rgba(98, 114, 164, 0.5);
+            margin-bottom: 20px;
+        }
+        
+        .mixer-title {
+            font-size: 1.3em;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ff79c6;
+        }
+        
+        .slider-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 140px;
+        }
+        
+        .slider-label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            color: #f8f8f2;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #44475a;
+            border-radius: 5px;
+            margin-bottom: 8px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #ff79c6;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .preset-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .preset-btn {
+            background: #44475a;
+            color: #f8f8f2;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+        
+        .preset-btn:hover {
+            background: #8be9fd;
+            color: #282a36;
+        }
+        
+        .visualizer {
+            width: 100%;
+            height: 80px;
+            margin-top: 20px;
+            background: rgba(40, 42, 54, 0.6);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .sound-panel {
+                gap: 10px;
+            }
+            
+            .sound-card {
+                width: 150px;
+                padding: 10px;
+            }
+            
+            .mixer-panel {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="header">
+        <h1>COSMIC SOUNDSCAPES</h1>
+        <p>Experience immersive space audio from across the universe</p>
+    </div>
+    
+    <div class="content">
+        <div class="sound-panel" id="soundPanel">
+            <!-- Sound cards will be generated here -->
+        </div>
+        
+        <div class="mixer-panel">
+            <div class="mixer-title">SOUND CONTROLLER</div>
+            
+            <div class="slider-group">
+                <div class="slider-container">
+                    <div class="slider-label">Volume</div>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="75">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Echo</div>
+                    <input type="range" id="echoSlider" min="0" max="100" value="20">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Pitch</div>
+                    <input type="range" id="pitchSlider" min="50" max="150" value="100">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Filter</div>
+                    <input type="range" id="filterSlider" min="0" max="100" value="50">
+                </div>
+            </div>
+            
+            <div class="preset-buttons">
+                <button class="preset-btn" id="presetDeepSpace">Deep Space</button>
+                <button class="preset-btn" id="presetPulsar">Pulsar</button>
+                <button class="preset-btn" id="presetNebula">Nebula</button>
+                <button class="preset-btn" id="presetVoyager">Voyager</button>
+            </div>
+            
+            <div class="visualizer">
+                <canvas id="visualizer"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Sound definitions
+        const sounds = [
+            {
+                id: 'blackHole',
+                title: 'Black Hole',
+                description: 'Sonification of pressure waves from the Perseus galaxy cluster',
+                icon: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#ff79c6" stroke-width="1.5" fill="none" /><circle cx="12" cy="12" r="6" stroke="#ff79c6" stroke-width="1.5" fill="none" /><circle cx="12" cy="12" r="2" fill="#ff79c6" /></svg>',
+                frequency: 100,
+                modulation: 0.2,
+                waveform: 'sine'
+            },
+            {
+                id: 'pulsar',
+                title: 'Pulsar',
+                description: 'Rapid electromagnetic pulses from a rotating neutron star',
+                icon: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" fill="#50fa7b" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="#50fa7b" stroke-width="1.5"/></svg>',
+                frequency: 440,
+                modulation: 15,
+                waveform: 'square'
+            },
+            {
+                id: 'solarWind',
+                title: 'Solar Wind',
+                description: 'Particles ejected from the Sun\'s corona',
+                icon: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" fill="#f1fa8c" /><path d="M12 3 L13 6 M15 4 L14 7 M9 4 L10 7 M17 6 L15 8 M7 6 L9 8 M18 9 L15 10 M6 9 L9 10 M19 12 L16 12 M5 12 L8 12 M18 15 L15 14 M6 15 L9 14 M17 18 L15 16 M7 18 L9 16 M12 21 L12 18" stroke="#f1fa8c" stroke-width="1" /></svg>',
+                frequency: 220,
+                modulation: 0.5,
+                waveform: 'sawtooth'
+            },
+            {
+                id: 'voyager',
+                title: 'Voyager',
+                description: 'Interstellar plasma waves recorded at the edge of our solar system',
+                icon: '<svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 19V5" stroke="#bd93f9" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="#bd93f9" /><path d="M7 7l10 10M17 7L7 17" stroke="#bd93f9" stroke-width="1" /></svg>',
+                frequency: 180,
+                modulation: 1,
+                waveform: 'triangle'
+            },
+            {
+                id: 'nebula',
+                title: 'Nebula',
+                description: 'Shimmering gas clouds forming new star systems',
+                icon: '<svg viewBox="0 0 24 24" fill="none"><path d="M15.5 8.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" fill="#8be9fd" fill-opacity="0.6" stroke="#8be9fd" stroke-width="1"/><path d="M10 14a3 3 0 100-6 3 3 0 000 6z" fill="#8be9fd" fill-opacity="0.4" stroke="#8be9fd" stroke-width="1"/><path d="M17 12a2 2 0 100-4 2 2 0 000 4z" fill="#8be9fd" fill-opacity="0.4" stroke="#8be9fd" stroke-width="1"/><path d="M14 16a2 2 0 100-4 2 2 0 000 4z" fill="#8be9fd" fill-opacity="0.4" stroke="#8be9fd" stroke-width="1"/><path d="M8 16a2 2 0 100-4 2 2 0 000 4z" fill="#8be9fd" fill-opacity="0.4" stroke="#8be9fd" stroke-width="1"/></svg>',
+                frequency: 300,
+                modulation: 0.3,
+                waveform: 'sine'
+            },
+            {
+                id: 'cosmosBg',
+                title: 'Cosmic Background',
+                description: 'Echoes of the Big Bang from 13.8 billion years ago',
+                icon: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#ff5555" stroke-width="1.5" stroke-dasharray="1 1" fill="none" /><circle cx="12" cy="12" r="5" stroke="#ff5555" stroke-width="1" stroke-dasharray="1 1" fill="none" /><circle cx="12" cy="12" r="1" fill="#ff5555" /></svg>',
+                frequency: 80,
+                modulation: 0.1,
+                waveform: 'sine'
+            }
+        ];
+        
+        // Audio Context and nodes
+        let audioContext;
+        let gainNode;
+        let analyser;
+        let oscillators = {};
+        let playing = {};
+        let delayNode;
+        let filterNode;
+        
+        // Setup UI
+        const soundPanel = document.getElementById('soundPanel');
+        
+        // Create sound cards
+        sounds.forEach(sound => {
+            const card = document.createElement('div');
+            card.className = 'sound-card';
+            card.id = `card-${sound.id}`;
+            
+            card.innerHTML = `
+                <div class="sound-icon">${sound.icon}</div>
+                <div class="sound-title">${sound.title}</div>
+                <div class="sound-description">${sound.description}</div>
+                <button id="btn-${sound.id}">PLAY</button>
+            `;
+            
+            soundPanel.appendChild(card);
+        });
+        
+        // Create stars background
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 200;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = `${Math.random() * 2}px`;
+                star.style.height = star.style.width;
+                star.style.position = 'absolute';
+                star.style.backgroundColor = '#fff';
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.opacity = Math.random();
+                star.style.borderRadius = '50%';
+                star.style.boxShadow = '0 0 3px #fff';
+                starsContainer.appendChild(star);
+                
+                // Twinkle animation
+                setInterval(() => {
+                    star.style.opacity = Math.random() * 0.8 + 0.2;
+                }, Math.random() * 5000 + 1000);
+            }
+            
+            // Add a few planets
+            const planets = [
+                { size: 150, color: '#ff5555', speed: 0.002, x: 10, y: 15 },
+                { size: 80, color: '#bd93f9', speed: 0.001, x: 85, y: 75 },
+                { size: 120, color: '#8be9fd', speed: 0.0015, x: 70, y: 20 }
+            ];
+            
+            planets.forEach(planet => {
+                const planetEl = document.createElement('div');
+                planetEl.className = 'planet';
+                planetEl.style.width = `${planet.size}px`;
+                planetEl.style.height = `${planet.size}px`;
+                planetEl.style.background = `radial-gradient(circle at 40% 40%, ${planet.color}, ${planet.color}55 60%, ${planet.color}00)`;
+                planetEl.style.left = `${planet.x}%`;
+                planetEl.style.top = `${planet.y}%`;
+                planetEl.style.opacity = 0.2;
+                starsContainer.appendChild(planetEl);
+                
+                // Slow floating animation
+                let time = 0;
+                setInterval(() => {
+                    time += planet.speed;
+                    const x = planet.x + Math.sin(time) * 2;
+                    const y = planet.y + Math.cos(time) * 2;
+                    planetEl.style.left = `${x}%`;
+                    planetEl.style.top = `${y}%`;
+                }, 50);
+            });
+        }
+        
+        // Initialize audio context
+        function initAudio() {
+            // Create audio context
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Create main gain node
+            gainNode = audioContext.createGain();
+            gainNode.gain.value = 0.75; // Default volume
+            
+            // Create delay node (echo)
+            delayNode = audioContext.createDelay();
+            delayNode.delayTime.value = 0.2;
+            const feedbackGain = audioContext.createGain();
+            feedbackGain.gain.value = 0.2;
+            
+            // Create filter
+            filterNode = audioContext.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.frequency.value = 5000;
+            
+            // Connect feedback loop for delay
+            gainNode.connect(delayNode);
+            delayNode.connect(feedbackGain);
+            feedbackGain.connect(delayNode);
+            feedbackGain.connect(filterNode);
+            
+            // Create analyser for visualizer
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            
+            // Final connection chain
+            gainNode.connect(filterNode);
+            filterNode.connect(analyser);
+            analyser.connect(audioContext.destination);
+            
+            // Setup event listeners for all sound buttons
+            sounds.forEach(sound => {
+                const button = document.getElementById(`btn-${sound.id}`);
+                const card = document.getElementById(`card-${sound.id}`);
+                
+                button.addEventListener('click', () => {
+                    if (playing[sound.id]) {
+                        stopSound(sound.id);
+                        button.textContent = 'PLAY';
+                        card.classList.remove('active');
+                    } else {
+                        playSound(sound);
+                        button.textContent = 'STOP';
+                        card.classList.add('active');
+                    }
+                });
+            });
+        }
+        
+        // Play a sound
+        function playSound(sound) {
+            if (audioContext === undefined) {
+                initAudio();
+            }
+            
+            // Create oscillator
+            const osc = audioContext.createOscillator();
+            osc.type = sound.waveform;
+            osc.frequency.value = sound.frequency;
+            
+            // Create modulator LFO if needed
+            if (sound.modulation > 0) {
+                const lfo = audioContext.createOscillator();
+                lfo.type = 'sine';
+                lfo.frequency.value = sound.modulation;
+                
+                const lfoGain = audioContext.createGain();
+                lfoGain.gain.value = sound.frequency * 0.1;
+                
+                lfo.connect(lfoGain);
+                lfoGain.connect(osc.frequency);
+                lfo.start();
+                
+                oscillators[`${sound.id}-lfo`] = lfo;
+            }
+            
+            // Create individual gain for this sound
+            const soundGain = audioContext.createGain();
+            soundGain.gain.value = 0;
+            
+            // Connect oscillator → soundGain → main gainNode
+            osc.connect(soundGain);
+            soundGain.connect(gainNode);
+            
+            // Start oscillator
+            osc.start();
+            
+            // Fade in
+            soundGain.gain.setValueAtTime(0, audioContext.currentTime);
+            soundGain.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 1);
+            
+            // Store references
+            oscillators[sound.id] = osc;
+            oscillators[`${sound.id}-gain`] = soundGain;
+            playing[sound.id] = true;
+        }
+        
+        // Stop a sound
+        function stopSound(id) {
+            if (!oscillators[id]) return;
+            
+            // Fade out
+            const soundGain = oscillators[`${id}-gain`];
+            soundGain.gain.setValueAtTime(soundGain.gain.value, audioContext.currentTime);
+            soundGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+            
+            // Stop oscillator after fade
+            setTimeout(() => {
+                oscillators[id].stop();
+                
+                // Stop LFO if it exists
+                if (oscillators[`${id}-lfo`]) {
+                    oscillators[`${id}-lfo`].stop();
+                    delete oscillators[`${id}-lfo`];
+                }
+                
+                delete oscillators[id];
+                delete oscillators[`${id}-gain`];
+                delete playing[id];
+            }, 500);
+        }
+        
+        // Setup UI controls
+        function setupControls() {
+            // Volume slider
+            document.getElementById('volumeSlider').addEventListener('input', (e) => {
+                if (gainNode) {
+                    gainNode.gain.value = e.target.value / 100;
+                }
+            });
+            
+            // Echo slider
+            document.getElementById('echoSlider').addEventListener('input', (e) => {
+                if (delayNode) {
+                    // Change both delay time and feedback
+                    const value = e.target.value / 100;
+                    const feedbackGain = delayNode.delayTime.value = Math.max(0.01, value * 0.5);
+                    const feedback = audioContext.destination.context.createGain();
+                    feedback.gain.value = value * 0.4;
+                }
+            });
+            
+            // Pitch slider
+            document.getElementById('pitchSlider').addEventListener('input', (e) => {
+                if (oscillators) {
+                    const pitchFactor = e.target.value / 100;
+                    
+                    // Adjust all active oscillators
+                    sounds.forEach(sound => {
+                        if (oscillators[sound.id]) {
+                            oscillators[sound.id].frequency.value = sound.frequency * pitchFactor;
+                        }
+                    });
+                }
+            });
+            
+            // Filter slider
+            document.getElementById('filterSlider').addEventListener('input', (e) => {
+                if (filterNode) {
+                    // Map 0-100 to frequency range (100-10000)
+                    const filterFreq = 100 + (e.target.value / 100) * 9900;
+                    filterNode.frequency.value = filterFreq;
+                }
+            });
+            
+            // Presets
+            document.getElementById('presetDeepSpace').addEventListener('click', () => {
+                stopAllSounds();
+                setTimeout(() => {
+                    document.getElementById('volumeSlider').value = 75;
+                    document.getElementById('echoSlider').value = 60;
+                    document.getElementById('pitchSlider').value = 80;
+                    document.getElementById('filterSlider').value = 30;
+                    
+                    // Apply settings
+                    gainNode.gain.value = 0.75;
+                    delayNode.delayTime.value = 0.3;
+                    filterNode.frequency.value = 3070;
+                    
+                    // Play specific sounds
+                    playSound(sounds.find(s => s.id === 'blackHole'));
+                    setTimeout(() => {
+                        playSound(sounds.find(s => s.id === 'cosmosBg'));
+                        document.getElementById(`card-blackHole`).classList.add('active');
+                        document.getElementById(`btn-blackHole`).textContent = 'STOP';
+                        document.getElementById(`card-cosmosBg`).classList.add('active');
+                        document.getElementById(`btn-cosmosBg`).textContent = 'STOP';
+                    }, 1000);
+                }, 500);
+            });
+            
+            document.getElementById('presetPulsar').addEventListener('click', () => {
+                stopAllSounds();
+                setTimeout(() => {
+                    document.getElementById('volumeSlider').value = 70;
+                    document.getElementById('echoSlider').value = 25;
+                    document.getElementById('pitchSlider').value = 95;
+                    document.getElementById('filterSlider').value = 70;
+                    
+                    // Apply settings
+                    gainNode.gain.value = 0.7;
+                    delayNode.delayTime.value = 0.125;
+                    filterNode.frequency.value = 7030;
+                    
+                    // Play specific sounds
+                    playSound(sounds.find(s => s.id === 'pulsar'));
+                    document.getElementById(`card-pulsar`).classList.add('active');
+                    document.getElementById(`btn-pulsar`).textContent = 'STOP';
+                }, 500);
+            });
+            
+            document.getElementById('presetNebula').addEventListener('click', () => {
+                stopAllSounds();
+                setTimeout(() => {
+                    document.getElementById('volumeSlider').value = 80;
+                    document.getElementById('echoSlider').value = 45;
+                    document.getElementById('pitchSlider').value = 105;
+                    document.getElementById('filterSlider').value = 60;
+                    
+                    // Apply settings
+                    gainNode.gain.value = 0.8;
+                    delayNode.delayTime.value = 0.225;
+                    filterNode.frequency.value = 6030;
+                    
+                    // Play specific sounds
+                    playSound(sounds.find(s => s.id === 'nebula'));
+                    setTimeout(() => {
+                        playSound(sounds.find(s => s.id === 'solarWind'));
+                        document.getElementById(`card-nebula`).classList.add('active');
+                        document.getElementById(`btn-nebula`).textContent = 'STOP';
+                        document.getElementById(`card-solarWind`).classList.add('active');
+                        document.getElementById(`btn-solarWind`).textContent = 'STOP';
+                    }, 1500);
+                }, 500);
+            });
+            
+            document.getElementById('presetVoyager').addEventListener('click', () => {
+                stopAllSounds();
+                setTimeout(() => {
+                    document.getElementById('volumeSlider').value = 65;
+                    document.getElementById('echoSlider').value = 35;
+                    document.getElementById('pitchSlider').value = 110;
+                    document.getElementById('filterSlider').value = 45;
+                    
+                    // Apply settings
+                    gainNode.gain.value = 0.65;
+                    delayNode.delayTime.value = 0.175;
+                    filterNode.frequency.value = 4550;
+                    
+                    // Play specific sounds
+                    playSound(sounds.find(s => s.id === 'voyager'));
+                    document.getElementById(`card-voyager`).classList.add('active');
+                    document.getElementById(`btn-voyager`).textContent = 'STOP';
+                }, 500);
+            });
+        }
+        
+        // Stop all sounds
+        function stopAllSounds() {
+            sounds.forEach(sound => {
+                if (playing[sound.id]) {
+                    stopSound(sound.id);
+                    document.getElementById(`btn-${sound.id}`).textContent = 'PLAY';
+                    document.getElementById(`card-${sound.id}`).classList.remove('active');
+                }
+            });
+        }
+        
+        // Audio visualizer
+        function setupVisualizer() {
+            const canvas = document.getElementById('visualizer');
+            const canvasCtx = canvas.getContext('2d');
+            
+            function resizeCanvas() {
+                canvas.width = canvas.clientWidth;
+                canvas.height = canvas.clientHeight;
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            function drawVisualizer() {
+                requestAnimationFrame(drawVisualizer);
+                
+                if (!analyser) return;
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                analyser.getByteFrequencyData(dataArray);
+                
+                canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const barWidth = (canvas.width / bufferLength) * 2.5;
+                let x = 0;
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = dataArray[i] / 2;
+                    
+                    // Gradient based on frequency
+                    const gradient = canvasCtx.createLinearGradient(0, 0, 0, canvas.height);
+                    gradient.addColorStop(0, '#ff79c6');
+                    gradient.addColorStop(0.5, '#bd93f9');
+                    gradient.addColorStop(1, '#8be9fd');
+                    
+                    canvasCtx.fillStyle = gradient;
+                    canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                    
+                    x += barWidth + 1;
+                }
+            }
+            
+            drawVisualizer();
+        }
+        
+        // Initialize everything
+        window.addEventListener('DOMContentLoaded', () => {
+            createStars();
+            setupControls();
+            setupVisualizer();
+            
+            // Initialize audio on first user interaction
+            document.addEventListener('click', () => {
+                if (!audioContext) {
+                    initAudio();
+                }
+            }, { once: true });
+        });
+    </script>
+</body>
+</html>
