@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Serpent - Trippy Snake Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            background-color: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+        }
+        #startScreen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+            animation: rainbow 3s linear infinite;
+        }
+        @keyframes rainbow {
+            0% { color: #ff0000; text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; }
+            16% { color: #ff9900; text-shadow: 0 0 10px #ff9900, 0 0 20px #ff9900; }
+            33% { color: #ffff00; text-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00; }
+            50% { color: #00ff00; text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+            66% { color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
+            83% { color: #0066ff; text-shadow: 0 0 10px #0066ff, 0 0 20px #0066ff; }
+            100% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff; }
+        }
+        #startScreen p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 600px;
+            text-align: center;
+        }
+        #startButton {
+            padding: 15px 30px;
+            font-size: 24px;
+            background: linear-gradient(90deg, #ff0000, #ff9900, #ffff00, #00ff00, #00ffff, #0066ff, #ff00ff);
+            background-size: 400% 400%;
+            animation: gradient 3s ease infinite;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        #startButton:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #ff00ff;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1>COSMIC SERPENT</h1>
+        <p>Navigate your cosmic serpent through trippy dimensions, collecting energy orbs and avoiding collisions.</p>
+        <button id="startButton">START JOURNEY</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="instructions">
+        <p>Arrow Keys/WASD: Move Snake | Space: Shift Dimension | R: Restart (after game over)</p>
+    </div>
+
+    <script>
+        // Cosmic Serpent - A trippy reimagining of Snake
+        // A psychedelic journey through cosmic dimensions
+
+        // Get canvas and context
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas to full window size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Game state
+        const state = {
+          snake: [],
+          food: { x: 0, y: 0 },
+          direction: { x: 1, y: 0 },
+          lastDirection: { x: 1, y: 0 },
+          gridSize: 25, // Larger grid size for easier gameplay
+          speed: 12, // Faster initial speed as requested
+          speedIncrement: 0.05, // Smaller speed increment for more gradual difficulty
+          growing: false,
+          score: 0,
+          gameOver: false,
+          gameStarted: false,
+          // Super trippy dimensions
+          dimensions: [
+            { name: "Cosmic Void", color: "#ff00ff", secondaryColor: "#cc66ff" },
+            { name: "Quantum Realm", color: "#00ffff", secondaryColor: "#66ffff" },
+            { name: "Nebula Dream", color: "#ff3399", secondaryColor: "#ff99cc" },
+            { name: "Solar Flare", color: "#ff6600", secondaryColor: "#ffcc00" },
+            { name: "Emerald Matrix", color: "#00ff66", secondaryColor: "#99ff99" },
+            { name: "Rainbow Vortex", color: "#ff00ff", secondaryColor: "#ffff00" }
+          ],
+          currentDimension: 0,
+          dimensionShiftCooldown: 0,
+          visualEffects: {
+            waveTime: 0,
+            pulseSize: 1,
+            hueRotation: 0,
+            trailParticles: [],
+            backgroundStars: [],
+            dimensionTransition: 0
+          },
+          powerUps: {
+            active: false,
+            type: null,
+            position: null,
+            duration: 0,
+            spawnTimer: 0
+          },
+          // Fun gameplay features
+          wallCollision: false, // No wall collision for easier gameplay
+          bonusItems: [],
+          bonusSpawnTimer: 100,
+          invincible: false,
+          invincibleTimer: 0,
+          // Rainbow mode is always on
+          rainbowMode: true
+        };
+
+        // Initialize the game
+        function init() {
+          // Create initial snake (shorter for easier start)
+          state.snake = [
+            { x: 5, y: 5 },
+            { x: 4, y: 5 }
+          ];
+          
+          // Place initial food
+          placeFood();
+          
+          // Create background stars
+          createBackgroundStars();
+          
+          // Start game loop
+          window.requestAnimationFrame(gameLoop);
+          
+          // Set up event listeners
+          document.addEventListener('keydown', handleKeyPress);
+        }
+
+        // Create background stars
+        function createBackgroundStars() {
+          state.visualEffects.backgroundStars = [];
+          
+          // More stars but smaller as requested
+          for (let i = 0; i < 300; i++) {
+            state.visualEffects.backgroundStars.push({
+              x: Math.random() * canvas.width,
+              y: Math.random() * canvas.height,
+              size: Math.random() * 1.5 + 0.5, // Smaller stars (0.5 to 2.0)
+              speed: Math.random() * 0.5 + 0.1,
+              color: getRandomRainbowColor() // Colorful stars
+            });
+          }
+        }
+
+        // Get a random rainbow color
+        function getRandomRainbowColor() {
+          const hue = Math.random() * 360;
+          return `hsl(${hue}, 100%, 50%)`;
+        }
+
+        // Get a rainbow color based on time and position
+        function getRainbowColor(offset = 0) {
+          return `hsl(${(state.visualEffects.hueRotation * 3 + offset) % 360}, 100%, 50%)`;
+        }
+
+        // Main game loop
+        let lastTime = 0;
+        let accumulator = 0;
+        function gameLoop(timestamp) {
+          const deltaTime = (timestamp - lastTime) / 1000;
+          lastTime = timestamp;
+          
+          // Clear canvas
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Update and render background effects
+          updateVisualEffects(deltaTime);
+          renderBackground();
+          
+          if (state.gameStarted) {
+            // Update game at fixed intervals
+            accumulator += deltaTime;
+            const timeStep = 1 / state.speed;
+            
+            if (accumulator >= timeStep) {
+              accumulator -= timeStep;
+              update();
+            }
+            
+            // Render game
+            render();
+          }
+          
+          // Continue game loop
+          window.requestAnimationFrame(gameLoop);
+        }
+
+        // Update game state
+        function update() {
+          if (state.gameOver) return;
+          
+          // Cooldown for dimension shifting
+          if (state.dimensionShiftCooldown > 0) {
+            state.dimensionShiftCooldown--;
+          }
+          
+          // Update power-up timer
+          if (state.powerUps.active) {
+            state.powerUps.duration -= 1;
+            if (state.powerUps.duration <= 0) {
+              state.powerUps.active = false;
+              
+              // Reset any power-up effects
+              if (state.powerUps.type === 'invincible') {
+                state.invincible = false;
+              }
+            }
+          }
+          
+          // Update invincibility timer
+          if (state.invincible && state.invincibleTimer > 0) {
+            state.invincibleTimer--;
+            if (state.invincibleTimer <= 0) {
+              state.invincible = false;
+            }
+          }
+          
+          // Spawn power-up (more frequently for more fun)
+          state.powerUps.spawnTimer -= 1;
+          if (state.powerUps.spawnTimer <= 0 && !state.powerUps.active && state.powerUps.position === null) {
+            if (Math.random() < 0.2) { // Higher chance to spawn power-ups
+              spawnPowerUp();
+            }
+            state.powerUps.spawnTimer = 50; // Spawn more frequently
+          }
+          
+          // Spawn bonus items
+          state.bonusSpawnTimer -= 1;
+          if (state.bonusSpawnTimer <= 0) {
+            if (Math.random() < 0.3 && state.bonusItems.length < 3) {
+              spawnBonusItem();
+            }
+            state.bonusSpawnTimer = 80;
+          }
+          
+          // Update snake position
+          const head = { 
+            x: state.snake[0].x + state.direction.x, 
+            y: state.snake[0].y + state.direction.y 
+          };
+          
+          // Handle wall wrapping (no collision with walls)
+          const gridWidth = Math.floor(canvas.width / state.gridSize);
+          const gridHeight = Math.floor(canvas.height / state.gridSize);
+          
+          if (head.x < 0) head.x = gridWidth - 1;
+          if (head.x >= gridWidth) head.x = 0;
+          if (head.y < 0) head.y = gridHeight - 1;
+          if (head.y >= gridHeight) head.y = 0;
+          
+          // Check for self collision (only if not invincible)
+          if (!state.invincible) {
+            for (let i = 0; i < state.snake.length; i++) {
+              if (state.snake[i].x === head.x && state.snake[i].y === head.y) {
+                gameOver();
+                return;
+              }
+            }
+          }
+          
+          // Add new head
+          state.snake.unshift(head);
+          
+          // Check for food collision
+          if (head.x === state.food.x && head.y === state.food.y) {
+            state.score += 10; // More points!
+            state.speed += state.speedIncrement;
+            state.growing = true;
+            placeFood();
+            
+            // Add trail particles for effect
+            addFoodParticles(state.food.x, state.food.y);
+            
+            // Random chance for temporary invincibility after eating
+            if (Math.random() < 0.1) {
+              state.invincible = true;
+              state.invincibleTimer = 30;
+            }
+          }
+          
+          // Check for power-up collision
+          if (state.powerUps.position && head.x === state.powerUps.position.x && head.y === state.powerUps.position.y) {
+            activatePowerUp();
+          }
+          
+          // Check for bonus item collisions
+          for (let i = state.bonusItems.length - 1; i >= 0; i--) {
+            const bonus = state.bonusItems[i];
+            if (head.x === bonus.x && head.y === bonus.y) {
+              // Apply bonus effect
+              switch (bonus.type) {
+                case 'points':
+                  state.score += 50; // Big points bonus!
+                  break;
+                case 'grow':
+                  // Add multiple segments
+                  for (let j = 0; j < 3; j++) {
+                    state.snake.push({ ...state.snake[state.snake.length - 1] });
+                  }
+                  break;
+                case 'shrink':
+                  // Remove segments (but keep at least 2)
+                  if (state.snake.length > 5) {
+                    state.snake = state.snake.slice(0, state.snake.length - 3);
+                  }
+                  break;
+              }
+              
+              // Remove the bonus item
+              state.bonusItems.splice(i, 1);
+              
+              // Add particles
+              addBonusParticles(bonus.x, bonus.y, bonus.color);
+            }
+          }
+          
+          // Remove tail if not growing
+          if (!state.growing) {
+            const tail = state.snake.pop();
+            addTrailParticle(tail.x, tail.y);
+          } else {
+            state.growing = false;
+          }
+          
+          // Store last direction
+          state.lastDirection = { ...state.direction };
+        }
+
+        // Handle keyboard input
+        function handleKeyPress(e) {
+          if (!state.gameStarted && (e.key === ' ' || e.key === 'Enter')) {
+            startGame();
+            return;
+          }
+          
+          switch (e.key) {
+            case 'ArrowUp':
+            case 'w':
+            case 'W':
+              if (state.lastDirection.y === 0) {
+                state.direction = { x: 0, y: -1 };
+              }
+              break;
+            case 'ArrowDown':
+            case 's':
+            case 'S':
+              if (state.lastDirection.y === 0) {
+                state.direction = { x: 0, y: 1 };
+              }
+              break;
+            case 'ArrowLeft':
+            case 'a':
+            case 'A':
+              if (state.lastDirection.x === 0) {
+                state.direction = { x: -1, y: 0 };
+              }
+              break;
+            case 'ArrowRight':
+            case 'd':
+            case 'D':
+              if (state.lastDirection.x === 0) {
+                state.direction = { x: 1, y: 0 };
+              }
+              break;
+            case ' ':
+              // Dimension shift on spacebar
+              if (state.dimensionShiftCooldown === 0 && state.gameStarted) {
+                shiftDimension();
+              }
+              break;
+          }
+        }
+
+        // Start the game
+        function startGame() {
+          state.gameStarted = true;
+          document.getElementById('startScreen').classList.add('hidden');
+        }
+
+        // Place food at random position
+        function placeFood() {
+          const gridWidth = Math.floor(canvas.width / state.gridSize);
+          const gridHeight = Math.floor(canvas.height / state.gridSize);
+          
+          let newFood;
+          let validPosition = false;
+          
+          while (!validPosition) {
+            newFood = {
+              x: Math.floor(Math.random() * gridWidth),
+              y: Math.floor(Math.random() * gridHeight),
+              color: getRandomRainbowColor() // Random rainbow color for food
+            };
+            
+            validPosition = true;
+            for (const segment of state.snake) {
+              if (segment.x === newFood.x && segment.y === newFood.y) {
+                validPosition = false;
+                break;
+              }
+            }
+            
+            // Check if position overlaps with power-ups or bonus items
+            if (state.powerUps.position && 
+                state.powerUps.position.x === newFood.x && 
+                state.powerUps.position.y === newFood.y) {
+              validPosition = false;
+            }
+            
+            for (const bonus of state.bonusItems) {
+              if (bonus.x === newFood.x && bonus.y === newFood.y) {
+                validPosition = false;
+                break;
+              }
+            }
+          }
+          
+          state.food = newFood;
+        }
+
+        // Spawn a power-up
+        function spawnPowerUp() {
+          const gridWidth = Math.floor(canvas.width / state.gridSize);
+          const gridHeight = Math.floor(canvas.height / state.gridSize);
+          
+          let position;
+          let validPosition = false;
+          
+          while (!validPosition) {
+            position = {
+              x: Math.floor(Math.random() * gridWidth),
+              y: Math.floor(Math.random() * gridHeight)
+            };
+            
+            validPosition = true;
+            
+            // Check if position overlaps with snake
+            for (const segment of state.snake) {
+              if (segment.x === position.x && segment.y === position.y) {
+                validPosition = false;
+                break;
+              }
+            }
+            
+            // Check if position overlaps with food
+            if (position.x === state.food.x && position.y === state.food.y) {
+              validPosition = false;
+            }
+            
+            // Check if position overlaps with bonus items
+            for (const bonus of state.bonusItems) {
+              if (bonus.x === position.x && bonus.y === position.y) {
+                validPosition = false;
+                break;
+              }
+            }
+          }
+          
+          // More fun power-up types
+          const types = ['speed', 'slow', 'grow', 'dimension', 'invincible', 'rainbow'];
+          const type = types[Math.floor(Math.random() * types.length)];
+          
+          state.powerUps = {
+            active: false,
+            type: type,
+            position: position,
+            color: getRandomRainbowColor(), // Random rainbow color for power-up
+            duration: 0,
+            spawnTimer: 0
+          };
+        }
+
+        // Spawn a bonus item
+        function spawnBonusItem() {
+          const gridWidth = Math.floor(canvas.width / state.gridSize);
+          const gridHeight = Math.floor(canvas.height / state.gridSize);
+          
+          let position;
+          let validPosition = false;
+          
+          while (!validPosition) {
+            position = {
+              x: Math.floor(Math.random() * gridWidth),
+              y: Math.floor(Math.random() * gridHeight)
+            };
+            
+            validPosition = true;
+            
+            // Check if position overlaps with snake
+            for (const segment of state.snake) {
+              if (segment.x === position.x && segment.y === position.y) {
+                validPosition = false;
+                break;
+              }
+            }
+            
+            // Check if position overlaps with food
+            if (position.x === state.food.x && position.y === state.food.y) {
+              validPosition = false;
+            }
+            
+            // Check if position overlaps with power-ups
+            if (state.powerUps.position && 
+                state.powerUps.position.x === position.x && 
+                state.powerUps.position.y === position.y) {
+              validPosition = false;
+            }
+            
+            // Check if position overlaps with other bonus items
+            for (const bonus of state.bonusItems) {
+              if (bonus.x === position.x && bonus.y === position.y) {
+                validPosition = false;
+                break;
+              }
+            }
+          }
+          
+          const types = ['points', 'grow', 'shrink'];
+          const type = types[Math.floor(Math.random() * types.length)];
+          
+          // Super trippy rainbow colors for bonus items
+          const color = getRandomRainbowColor();
+          
+          state.bonusItems.push({
+            x: position.x,
+            y: position.y,
+            type: type,
+            color: color,
+            pulseTime: 0
+          });
+        }
+
+        // Activate power-up
+        function activatePowerUp() {
+          state.powerUps.active = true;
+          
+          switch (state.powerUps.type) {
+            case 'speed':
+              state.speed *= 1.3; // Less extreme speed boost
+              state.powerUps.duration = 150;
+              break;
+            case 'slow':
+              state.speed *= 0.7;
+              state.powerUps.duration = 150;
+              break;
+            case 'grow':
+              for (let i = 0; i < 5; i++) { // More growth for fun!
+                state.snake.push({ ...state.snake[state.snake.length - 1] });
+              }
+              state.score += 20; // Bonus points
+              state.powerUps.duration = 1;
+              break;
+            case 'dimension':
+              shiftDimension();
+              state.powerUps.duration = 1;
+              break;
+            case 'invincible':
+              state.invincible = true;
+              state.powerUps.duration = 200;
+              break;
+            case 'rainbow':
+              // Rainbow mode is always on now, but give bonus points
+              state.score += 30;
+              state.powerUps.duration = 1;
+              break;
+          }
+          
+          state.powerUps.position = null;
+        }
+
+        // Shift to a new dimension
+        function shiftDimension() {
+          state.currentDimension = (state.currentDimension + 1) % state.dimensions.length;
+          state.dimensionShiftCooldown = 5; // Shorter cooldown for more fun
+          
+          // Visual effect for dimension shift
+          state.visualEffects.pulseSize = 2.5;
+          state.visualEffects.dimensionTransition = 1;
+          
+          // Add particles for effect
+          for (let i = 0; i < 50; i++) {
+            addDimensionParticle();
+          }
+          
+          // Bonus points for dimension shift
+          state.score += 5;
+        }
+
+        // Update visual effects
+        function updateVisualEffects(deltaTime) {
+          // Update wave time for flowing background
+          state.visualEffects.waveTime += deltaTime;
+          
+          // Update hue rotation for color cycling
+          state.visualEffects.hueRotation = (state.visualEffects.hueRotation + 1) % 360;
+          
+          // Update pulse effect
+          if (state.visualEffects.pulseSize > 1) {
+            state.visualEffects.pulseSize -= deltaTime * 2;
+            if (state.visualEffects.pulseSize < 1) state.visualEffects.pulseSize = 1;
+          }
+          
+          // Update dimension transition
+          if (state.visualEffects.dimensionTransition > 0) {
+            state.visualEffects.dimensionTransition -= deltaTime * 2;
+            if (state.visualEffects.dimensionTransition < 0) state.visualEffects.dimensionTransition = 0;
+          }
+          
+          // Update trail particles
+          for (let i = state.visualEffects.trailParticles.length - 1; i >= 0; i--) {
+            const particle = state.visualEffects.trailParticles[i];
+            particle.life -= deltaTime;
+            particle.x += particle.vx * deltaTime;
+            particle.y += particle.vy * deltaTime;
+            particle.size -= deltaTime * 10;
+            
+            if (particle.life <= 0 || particle.size <= 0) {
+              state.visualEffects.trailParticles.splice(i, 1);
+            }
+          }
+          
+          // Update background stars
+          for (let i = 0; i < state.visualEffects.backgroundStars.length; i++) {
+            const star = state.visualEffects.backgroundStars[i];
+            star.y += star.speed;
+            
+            if (star.y > canvas.height) {
+              star.y = 0;
+              star.x = Math.random() * canvas.width;
+              star.color = getRandomRainbowColor(); // New color when recycling star
+            }
+          }
+          
+          // Update bonus items pulse
+          for (let i = 0; i < state.bonusItems.length; i++) {
+            state.bonusItems[i].pulseTime += deltaTime;
+          }
+        }
+
+        // Add a trail particle
+        function addTrailParticle(x, y) {
+          const dimension = state.dimensions[state.currentDimension];
+          
+          for (let i = 0; i < 3; i++) {
+            state.visualEffects.trailParticles.push({
+              x: (x + 0.5) * state.gridSize,
+              y: (y + 0.5) * state.gridSize,
+              vx: (Math.random() - 0.5) * 50,
+              vy: (Math.random() - 0.5) * 50,
+              size: state.gridSize * 0.5,
+              color: getRainbowColor(i * 30), // Rainbow colors for trail particles
+              life: 0.5 + Math.random() * 0.5
+            });
+          }
+        }
+
+        // Add particles when food is eaten
+        function addFoodParticles(x, y) {
+          for (let i = 0; i < 20; i++) {
+            state.visualEffects.trailParticles.push({
+              x: (x + 0.5) * state.gridSize,
+              y: (y + 0.5) * state.gridSize,
+              vx: (Math.random() - 0.5) * 100,
+              vy: (Math.random() - 0.5) * 100,
+              size: state.gridSize * 0.7,
+              color: getRainbowColor(i * 18), // Rainbow colors for food particles
+              life: 1 + Math.random()
+            });
+          }
+        }
+
+        // Add particles for bonus items
+        function addBonusParticles(x, y, color) {
+          for (let i = 0; i < 30; i++) {
+            state.visualEffects.trailParticles.push({
+              x: (x + 0.5) * state.gridSize,
+              y: (y + 0.5) * state.gridSize,
+              vx: (Math.random() - 0.5) * 150,
+              vy: (Math.random() - 0.5) * 150,
+              size: state.gridSize * 0.8,
+              color: getRainbowColor(i * 12), // Rainbow colors for bonus particles
+              life: 1.5 + Math.random()
+            });
+          }
+        }
+
+        // Add particles for dimension shift
+        function addDimensionParticle() {
+          const dimension = state.dimensions[state.currentDimension];
+          
+          state.visualEffects.trailParticles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 200,
+            vy: (Math.random() - 0.5) * 200,
+            size: state.gridSize * (0.5 + Math.random()),
+            color: getRainbowColor(Math.random() * 360), // Rainbow colors for dimension particles
+            life: 1 + Math.random()
+          });
+        }
+
+        // Render trippy background
+        function renderBackground() {
+          // Create gradient background
+          const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+          const dimension = state.dimensions[state.currentDimension];
+          
+          // Super trippy background gradient
+          gradient.addColorStop(0, `hsl(${(state.visualEffects.hueRotation) % 360}, 100%, 10%)`);
+          gradient.addColorStop(0.25, `hsl(${(state.visualEffects.hueRotation + 90) % 360}, 100%, 15%)`);
+          gradient.addColorStop(0.5, `hsl(${(state.visualEffects.hueRotation + 180) % 360}, 100%, 15%)`);
+          gradient.addColorStop(0.75, `hsl(${(state.visualEffects.hueRotation + 270) % 360}, 100%, 15%)`);
+          gradient.addColorStop(1, `hsl(${(state.visualEffects.hueRotation + 360) % 360}, 100%, 10%)`);
+          
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Draw background stars
+          for (const star of state.visualEffects.backgroundStars) {
+            ctx.fillStyle = star.color;
+            ctx.globalAlpha = 0.3 + Math.random() * 0.7;
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          
+          // Draw flowing wave patterns
+          for (let i = 0; i < 5; i++) {
+            // Rainbow wave colors
+            ctx.strokeStyle = `hsl(${(state.visualEffects.hueRotation + i * 72) % 360}, 100%, 50%)`;
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            
+            for (let x = 0; x < canvas.width; x += 10) {
+              const y = Math.sin(x * 0.01 + state.visualEffects.waveTime * 2 + i) * 50 + 
+                       Math.cos(x * 0.02 + state.visualEffects.waveTime * 3) * 25 +
+                       canvas.height / 2 + i * 50 - 100;
+              
+              if (x === 0) {
+                ctx.moveTo(x, y);
+              } else {
+                ctx.lineTo(x, y);
+              }
+            }
+            
+            ctx.globalAlpha = 0.3;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          }
+          
+          // Draw grid
+          ctx.strokeStyle = getRainbowColor();
+          ctx.lineWidth = 0.5;
+          ctx.globalAlpha = 0.1;
+          
+          for (let x = 0; x < canvas.width; x += state.gridSize * 2) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+          }
+          
+          for (let y = 0; y < canvas.height; y += state.gridSize * 2) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+          }
+          
+          ctx.globalAlpha = 1;
+          
+          // Dimension transition effect
+          if (state.visualEffects.dimensionTransition > 0) {
+            ctx.fillStyle = getRainbowColor();
+            ctx.globalAlpha = state.visualEffects.dimensionTransition * 0.5;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = 1;
+          }
+        }
+
+        // Render game elements
+        function render() {
+          const dimension = state.dimensions[state.currentDimension];
+          
+          // Draw trail particles
+          for (const particle of state.visualEffects.trailParticles) {
+            ctx.globalAlpha = particle.life;
+            ctx.fillStyle = particle.color;
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          
+          // Draw bonus items
+          for (const bonus of state.bonusItems) {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = bonus.color;
+            ctx.fillStyle = getRainbowColor(bonus.pulseTime * 100); // Rainbow color cycling
+            
+            const bonusPulse = 1 + Math.sin(bonus.pulseTime * 5) * 0.3;
+            const bonusSize = state.gridSize * 0.8 * bonusPulse;
+            const bonusX = (bonus.x + 0.5) * state.gridSize;
+            const bonusY = (bonus.y + 0.5) * state.gridSize;
+            
+            // Draw star shape for bonus items
+            const spikes = 5;
+            const outerRadius = bonusSize;
+            const innerRadius = bonusSize * 0.4;
+            
+            ctx.beginPath();
+            for (let i = 0; i < spikes * 2; i++) {
+              const radius = i % 2 === 0 ? outerRadius : innerRadius;
+              const angle = (Math.PI * i) / spikes;
+              const x = bonusX + Math.cos(angle) * radius;
+              const y = bonusY + Math.sin(angle) * radius;
+              
+              if (i === 0) {
+                ctx.moveTo(x, y);
+              } else {
+                ctx.lineTo(x, y);
+              }
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw symbol
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            let symbol;
+            switch (bonus.type) {
+              case 'points':
+                symbol = '50';
+                break;
+              case 'grow':
+                symbol = '+3';
+                break;
+              case 'shrink':
+                symbol = '-3';
+                break;
+            }
+            
+            ctx.fillText(symbol, bonusX, bonusY);
+            
+            // Reset shadow
+            ctx.shadowBlur = 0;
+          }
+          
+          // Draw power-up if active
+          if (state.powerUps.position) {
+            ctx.shadowBlur = 15;
+            
+            // Rainbow cycling colors for power-ups
+            const powerUpColor = getRainbowColor(state.visualEffects.waveTime * 100);
+            ctx.shadowColor = powerUpColor;
+            ctx.fillStyle = powerUpColor;
+            
+            const powerUpPulse = 1 + Math.sin(state.visualEffects.waveTime * 5) * 0.2;
+            const powerUpSize = state.gridSize * 0.8 * powerUpPulse;
+            const powerUpX = (state.powerUps.position.x + 0.5) * state.gridSize;
+            const powerUpY = (state.powerUps.position.y + 0.5) * state.gridSize;
+            
+            // Draw hexagon for power-ups
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const angle = (Math.PI * 2 * i) / 6;
+              const x = powerUpX + Math.cos(angle) * powerUpSize;
+              const y = powerUpY + Math.sin(angle) * powerUpSize;
+              
+              if (i === 0) {
+                ctx.moveTo(x, y);
+              } else {
+                ctx.lineTo(x, y);
+              }
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw power-up symbol
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            let symbol;
+            switch (state.powerUps.type) {
+              case 'speed':
+                symbol = '⚡';
+                break;
+              case 'slow':
+                symbol = '⏱';
+                break;
+              case 'grow':
+                symbol = '+5';
+                break;
+              case 'dimension':
+                symbol = '✧';
+                break;
+              case 'invincible':
+                symbol = '★';
+                break;
+              case 'rainbow':
+                symbol = '♥';
+                break;
+            }
+            
+            ctx.fillText(symbol, powerUpX, powerUpY);
+            
+            // Reset shadow
+            ctx.shadowBlur = 0;
+          }
+          
+          // Draw food with glow effect
+          ctx.shadowBlur = 15;
+          
+          // Rainbow food color
+          const foodColor = state.food.color || getRainbowColor(state.visualEffects.waveTime * 200);
+          ctx.shadowColor = foodColor;
+          ctx.fillStyle = foodColor;
+          
+          const foodPulse = 1 + Math.sin(state.visualEffects.waveTime * 5) * 0.2;
+          const foodSize = state.gridSize * 0.8 * foodPulse;
+          const foodX = (state.food.x + 0.5) * state.gridSize;
+          const foodY = (state.food.y + 0.5) * state.gridSize;
+          
+          ctx.beginPath();
+          ctx.arc(foodX, foodY, foodSize, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Reset shadow for other elements
+          ctx.shadowBlur = 0;
+          
+          // Draw snake
+          for (let i = 0; i < state.snake.length; i++) {
+            const segment = state.snake[i];
+            const segmentSize = state.gridSize * state.visualEffects.pulseSize;
+            
+            // Calculate color based on position in snake - always rainbow!
+            let segmentColor;
+            
+            if (state.invincible) {
+              // Gold pulsing color when invincible
+              const goldHue = 50 + Math.sin(state.visualEffects.waveTime * 10) * 10;
+              segmentColor = `hsl(${goldHue}, 100%, 60%)`;
+            } else {
+              // Rainbow snake segments
+              const hue = (state.visualEffects.hueRotation * 3 + i * 15) % 360;
+              segmentColor = `hsl(${hue}, 100%, 60%)`;
+            }
+            
+            ctx.fillStyle = segmentColor;
+            
+            // Add glow effect to head
+            if (i === 0) {
+              ctx.shadowBlur = 10;
+              ctx.shadowColor = segmentColor;
+            }
+            
+            // Draw segment
+            const x = segment.x * state.gridSize;
+            const y = segment.y * state.gridSize;
+            
+            if (i === 0) {
+              // Draw head as circle
+              ctx.beginPath();
+              ctx.arc(
+                x + state.gridSize / 2, 
+                y + state.gridSize / 2, 
+                segmentSize / 2, 
+                0, 
+                Math.PI * 2
+              );
+              ctx.fill();
+              
+              // Draw eyes
+              ctx.fillStyle = '#ffffff';
+              
+              const eyeOffsetX = state.direction.x * segmentSize * 0.2;
+              const eyeOffsetY = state.direction.y * segmentSize * 0.2;
+              
+              // Left eye
+              ctx.beginPath();
+              ctx.arc(
+                x + state.gridSize / 2 + eyeOffsetX - state.direction.y * segmentSize * 0.15, 
+                y + state.gridSize / 2 + eyeOffsetY + state.direction.x * segmentSize * 0.15, 
+                segmentSize * 0.1, 
+                0, 
+                Math.PI * 2
+              );
+              ctx.fill();
+              
+              // Right eye
+              ctx.beginPath();
+              ctx.arc(
+                x + state.gridSize / 2 + eyeOffsetX + state.direction.y * segmentSize * 0.15, 
+                y + state.gridSize / 2 + eyeOffsetY - state.direction.x * segmentSize * 0.15, 
+                segmentSize * 0.1, 
+                0, 
+                Math.PI * 2
+              );
+              ctx.fill();
+            } else {
+              // Draw body segments with rounded corners
+              ctx.beginPath();
+              if (typeof ctx.roundRect === 'function') {
+                // Use roundRect if available
+                ctx.roundRect(
+                  x, 
+                  y, 
+                  segmentSize, 
+                  segmentSize, 
+                  segmentSize / 4
+                );
+              } else {
+                // Fallback for browsers that don't support roundRect
+                ctx.rect(x, y, segmentSize, segmentSize);
+              }
+              ctx.fill();
+            }
+            
+            // Reset shadow
+            ctx.shadowBlur = 0;
+          }
+          
+          // Draw score and dimension info with rainbow text
+          ctx.fillStyle = getRainbowColor();
+          ctx.font = '24px Arial';
+          ctx.textAlign = 'left';
+          ctx.fillText(`Score: ${state.score}`, 20, 40);
+          ctx.fillText(`Dimension: ${dimension.name}`, 20, 70);
+          
+          // Draw power-up status if active
+          if (state.powerUps.active) {
+            let statusText;
+            switch (state.powerUps.type) {
+              case 'speed':
+                statusText = 'Speed Boost';
+                break;
+              case 'slow':
+                statusText = 'Slow Motion';
+                break;
+              case 'grow':
+                statusText = 'Growth Spurt';
+                break;
+              case 'dimension':
+                statusText = 'Dimension Shift';
+                break;
+              case 'invincible':
+                statusText = 'INVINCIBLE!';
+                break;
+              case 'rainbow':
+                statusText = 'Rainbow Mode';
+                break;
+            }
+            
+            if (state.powerUps.duration > 1) {
+              ctx.fillStyle = getRainbowColor(100);
+              ctx.fillText(`${statusText}: ${Math.ceil(state.powerUps.duration / 10)}s`, 20, 100);
+            }
+          }
+          
+          // Draw invincibility status
+          if (state.invincible && state.invincibleTimer > 0) {
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillText(`Invincible: ${Math.ceil(state.invincibleTimer / 10)}s`, 20, 130);
+          }
+          
+          // Draw game over message
+          if (state.gameOver) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Rainbow game over text
+            const gameOverColor = getRainbowColor();
+            ctx.fillStyle = gameOverColor;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = gameOverColor;
+            ctx.font = '48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('COSMIC JOURNEY ENDED', canvas.width / 2, canvas.height / 2 - 40);
+            
+            ctx.shadowBlur = 10;
+            ctx.font = '24px Arial';
+            ctx.fillText(`Final Score: ${state.score}`, canvas.width / 2, canvas.height / 2 + 20);
+            ctx.fillText('Press R to Restart', canvas.width / 2, canvas.height / 2 + 60);
+            
+            ctx.shadowBlur = 0;
+          }
+        }
+
+        // Game over
+        function gameOver() {
+          state.gameOver = true;
+          
+          // Add explosion particles
+          const head = state.snake[0];
+          for (let i = 0; i < 50; i++) {
+            state.visualEffects.trailParticles.push({
+              x: (head.x + 0.5) * state.gridSize,
+              y: (head.y + 0.5) * state.gridSize,
+              vx: (Math.random() - 0.5) * 200,
+              vy: (Math.random() - 0.5) * 200,
+              size: state.gridSize * (0.5 + Math.random()),
+              color: getRainbowColor(i * 7.2), // Rainbow explosion
+              life: 1 + Math.random()
+            });
+          }
+          
+          // Add restart listener
+          document.addEventListener('keydown', function restartHandler(e) {
+            if (e.key === 'r' || e.key === 'R') {
+              state.gameOver = false;
+              state.score = 0;
+              state.speed = 12; // Reset to faster speed as requested
+              state.currentDimension = 0;
+              state.powerUps = {
+                active: false,
+                type: null,
+                position: null,
+                duration: 0,
+                spawnTimer: 50
+              };
+              state.bonusItems = [];
+              state.bonusSpawnTimer = 100;
+              state.invincible = false;
+              state.invincibleTimer = 0;
+              init();
+              document.removeEventListener('keydown', restartHandler);
+            }
+          });
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          createBackgroundStars();
+        });
+
+        // Start button event listener
+        document.getElementById('startButton').addEventListener('click', startGame);
+
+        // Start the game initialization
+        init();
+    </script>
+</body>
+</html>
