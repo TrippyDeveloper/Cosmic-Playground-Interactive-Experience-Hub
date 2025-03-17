@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="Trippy LSD Breakout">
+    <meta property="og:description" content="A psychedelic twist on the classic Breakout game with trippy visuals and dynamic effects">
+    <meta property="og:type" content="website">
     <title>Trippy LSD Breakout</title>
     <style>
         @font-face {
@@ -52,6 +55,7 @@
             margin-bottom: 2rem;
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
             animation: glow 2s infinite alternate;
+            color: white;
         }
         
         @keyframes glow {
@@ -76,46 +80,8 @@
             position: relative;
             overflow: hidden;
             z-index: 1;
-            background-color: #7e22ce; /* Purple-700 */
+            background-color: #7e22ce; /* Purple */
             color: white;
-        }
-        
-        .btn:hover {
-            background-color: #9333ea; /* Purple-600 */
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-        }
-        
-        .btn-green {
-            background-color: #15803d; /* Green-700 */
-        }
-        
-        .btn-green:hover {
-            background-color: #16a34a; /* Green-600 */
-        }
-        
-        .btn-yellow {
-            background-color: #a16207; /* Yellow-700 */
-        }
-        
-        .btn-yellow:hover {
-            background-color: #ca8a04; /* Yellow-600 */
-        }
-        
-        .btn-red {
-            background-color: #b91c1c; /* Red-700 */
-        }
-        
-        .btn-red:hover {
-            background-color: #dc2626; /* Red-600 */
-        }
-        
-        .btn-blue {
-            background-color: #1d4ed8; /* Blue-700 */
-        }
-        
-        .btn-blue:hover {
-            background-color: #2563eb; /* Blue-600 */
         }
         
         .btn::before {
@@ -136,6 +102,44 @@
             0% { background-position: 0 0; }
             50% { background-position: 400% 0; }
             100% { background-position: 0 0; }
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            background-color: #9333ea; /* Lighter purple */
+        }
+        
+        .btn-green {
+            background-color: #15803d; /* Green */
+        }
+        
+        .btn-green:hover {
+            background-color: #16a34a; /* Lighter green */
+        }
+        
+        .btn-yellow {
+            background-color: #a16207; /* Yellow */
+        }
+        
+        .btn-yellow:hover {
+            background-color: #ca8a04; /* Lighter yellow */
+        }
+        
+        .btn-red {
+            background-color: #b91c1c; /* Red */
+        }
+        
+        .btn-red:hover {
+            background-color: #dc2626; /* Lighter red */
+        }
+        
+        .btn-blue {
+            background-color: #1d4ed8; /* Blue */
+        }
+        
+        .btn-blue:hover {
+            background-color: #2563eb; /* Lighter blue */
         }
         
         .controls {
@@ -229,8 +233,8 @@
         
         <div id="gameOverMenu" class="menu hidden">
             <h1>Game Over</h1>
-            <p id="finalScore">Score: 0</p>
-            <p id="highScore">High Score: 0</p>
+            <p id="finalScore" class="text-white text-3xl mb-8" style="color: white; font-size: 1.875rem; margin-bottom: 2rem;">Score: 0</p>
+            <p id="highScore" class="text-white text-2xl mb-8" style="color: white; font-size: 1.5rem; margin-bottom: 2rem;">High Score: 0</p>
             <button id="playAgainButton" class="btn btn-green">Play Again</button>
             <button id="mainMenuButton" class="btn btn-blue">Main Menu</button>
         </div>
@@ -310,18 +314,19 @@
         // Visual effects
         let backgroundEffects = {
             hue: 0,
+            hueChangeRate: 0.1, // Slower color change rate
             saturation: 100,
             lightness: 50,
             fractals: [],
             particles: [],
-            hueChangeRate: 0.1 // Slowed down hue change rate
+            stars: []
         };
         
-        // Audio
-        let sounds = {};
+        // Audio context and sounds
+        let audioContext;
+        let musicPlaying = false;
         let musicVolume = 0.5;
         let sfxVolume = 0.7;
-        let musicPlaying = false;
         
         // Input handling
         let rightPressed = false;
@@ -344,6 +349,13 @@
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             
+            // Initialize audio context
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Web Audio API is not supported in this browser');
+            }
+            
             // Set up event listeners
             document.addEventListener('keydown', keyDownHandler);
             document.addEventListener('keyup', keyUpHandler);
@@ -365,9 +377,6 @@
             
             // Initialize background effects
             initBackgroundEffects();
-            
-            // Initialize sounds
-            initSounds();
             
             // Start the animation loop for the menu
             animateMenu();
@@ -399,22 +408,10 @@
             resetPaddle();
         }
         
-        function initSounds() {
-            // Simple sound effects using Audio API instead of Howler.js
-            sounds = {
-                paddle: { play: function() { playSound('paddle'); } },
-                brick: { play: function() { playSound('brick'); } },
-                wall: { play: function() { playSound('wall'); } },
-                powerUp: { play: function() { playSound('powerUp'); } },
-                levelUp: { play: function() { playSound('levelUp'); } },
-                gameOver: { play: function() { playSound('gameOver'); } },
-                extraLife: { play: function() { playSound('extraLife'); } }
-            };
-        }
-        
         function playSound(type) {
-            // Create a simple beep sound based on the type
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (!audioContext) return;
+            
+            // Create oscillator for simple sound effects
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
@@ -424,75 +421,106 @@
             // Set volume
             gainNode.gain.value = sfxVolume;
             
-            // Set frequency and duration based on sound type
-            let frequency = 440;
-            let duration = 0.1;
-            
+            // Configure sound based on type
             switch(type) {
                 case 'paddle':
-                    frequency = 300;
-                    duration = 0.1;
+                    oscillator.frequency.value = 300;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(sfxVolume, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
                     break;
                 case 'brick':
-                    frequency = 500;
-                    duration = 0.1;
+                    oscillator.frequency.value = 500;
+                    oscillator.type = 'square';
+                    gainNode.gain.setValueAtTime(sfxVolume, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
                     break;
                 case 'wall':
-                    frequency = 200;
-                    duration = 0.1;
+                    oscillator.frequency.value = 200;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(sfxVolume, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
                     break;
                 case 'powerUp':
-                    frequency = 800;
-                    duration = 0.2;
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(sfxVolume, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.2);
                     break;
                 case 'levelUp':
-                    frequency = 600;
-                    duration = 0.3;
+                    oscillator.frequency.value = 600;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(sfxVolume, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
                     break;
                 case 'gameOver':
-                    frequency = 150;
-                    duration = 0.5;
+                    oscillator.frequency.value = 150;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(sfxVolume, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.5);
                     break;
                 case 'extraLife':
-                    frequency = 700;
-                    duration = 0.2;
+                    oscillator.frequency.value = 700;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(sfxVolume, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.2);
                     break;
             }
-            
-            oscillator.frequency.value = frequency;
-            oscillator.type = 'sine';
-            
-            oscillator.start();
-            
-            // Stop after duration
-            setTimeout(() => {
-                oscillator.stop();
-                audioContext.close();
-            }, duration * 1000);
         }
         
         function playMusic() {
-            // We'll simulate background music with a simple oscillator pattern
-            if (musicPlaying) return;
+            if (!audioContext || musicPlaying) return;
             
             musicPlaying = true;
             
-            // This is just a placeholder - in a real game, you'd use actual music
-            console.log("Music started");
+            // Simple background music using oscillators
+            const playNote = (freq, start, duration) => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.frequency.value = freq;
+                osc.type = 'sine';
+                gain.gain.value = musicVolume * 0.2;
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.start(audioContext.currentTime + start);
+                osc.stop(audioContext.currentTime + start + duration);
+            };
+            
+            // Play a simple ambient sequence
+            const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+            let time = 0;
+            
+            // Loop through notes with different timings
+            for (let i = 0; i < 16; i++) {
+                const note = notes[i % notes.length];
+                playNote(note, time, 1.0);
+                time += 0.5;
+            }
         }
         
         function stopMusic() {
-            if (!musicPlaying) return;
-            
             musicPlaying = false;
-            
-            // Stop the music
-            console.log("Music stopped");
         }
         
         function updateMusicVolume(e) {
             musicVolume = e.target.value / 100;
-            // In a real implementation, you would adjust the actual music volume here
         }
         
         function updateSfxVolume(e) {
@@ -507,10 +535,22 @@
                     x: Math.random() * GAME_WIDTH,
                     y: Math.random() * GAME_HEIGHT,
                     radius: Math.random() * 100 + 50,
-                    speed: Math.random() * 0.3 + 0.1, // Slowed down fractal movement
+                    speed: Math.random() * 0.3 + 0.1, // Slower movement
                     angle: Math.random() * Math.PI * 2,
                     hue: Math.random() * 360,
-                    hueChangeRate: Math.random() * 0.1 + 0.05 // Individualized slower hue change rate
+                    hueChangeRate: Math.random() * 0.1 + 0.05 // Individualized slow color change
+                });
+            }
+            
+            // Create stars for cosmic background
+            backgroundEffects.stars = [];
+            for (let i = 0; i < 200; i++) {
+                backgroundEffects.stars.push({
+                    x: Math.random() * GAME_WIDTH,
+                    y: Math.random() * GAME_HEIGHT,
+                    radius: Math.random() * 1.5 + 0.5,
+                    brightness: Math.random() * 0.8 + 0.2,
+                    twinkleSpeed: Math.random() * 0.02 + 0.01
                 });
             }
         }
@@ -556,7 +596,7 @@
                         hits: hits,
                         maxHits: hits,
                         hue: Math.random() * 360,
-                        hueChangeRate: 0.1, // Slowed down hue change rate for psychedelic bricks
+                        hueChangeRate: type === 'psychedelic' ? 0.1 : 0, // Much slower color change for psychedelic bricks
                         visible: true
                     });
                 }
@@ -707,7 +747,7 @@
             document.getElementById('gameOverMenu').classList.remove('hidden');
             
             // Play game over sound
-            sounds.gameOver.play();
+            playSound('gameOver');
             
             // Stop music
             stopMusic();
@@ -731,7 +771,7 @@
             updateHUD();
             
             // Play level up sound
-            sounds.levelUp.play();
+            playSound('levelUp');
         }
         
         function showLevelTransition() {
@@ -788,6 +828,11 @@
                 useMouse = false;
             } else if (e.key === ' ' || e.key === 'Spacebar') {
                 spacePressed = true;
+                
+                // Start game if in menu
+                if (gameState === 'menu') {
+                    startGame();
+                }
             } else if (e.key === 'p' || e.key === 'P') {
                 if (gameState === 'playing') {
                     pauseGame();
@@ -818,7 +863,8 @@
         
         function mouseMoveHandler(e) {
             const relativeX = e.clientX - canvas.getBoundingClientRect().left;
-            mouseX = (relativeX / parseInt(canvas.style.width || '1')) * GAME_WIDTH;
+            const canvasWidth = parseInt(canvas.style.width) || canvas.width;
+            mouseX = (relativeX / canvasWidth) * GAME_WIDTH;
             useMouse = true;
         }
         
@@ -826,6 +872,23 @@
             e.preventDefault();
             useTouch = true;
             useMouse = false;
+            
+            // Check if we're in menu state and tap is on the button
+            if (gameState === 'menu') {
+                const touch = e.touches[0];
+                const buttonElement = document.getElementById('startButton');
+                const buttonRect = buttonElement.getBoundingClientRect();
+                
+                if (
+                    touch.clientX >= buttonRect.left && 
+                    touch.clientX <= buttonRect.right && 
+                    touch.clientY >= buttonRect.top && 
+                    touch.clientY <= buttonRect.bottom
+                ) {
+                    startGame();
+                    return;
+                }
+            }
             
             // Launch the ball if it's stuck to the paddle
             if (gameState === 'playing') {
@@ -841,7 +904,8 @@
             e.preventDefault();
             const touch = e.touches[0];
             const relativeX = touch.clientX - canvas.getBoundingClientRect().left;
-            touchX = (relativeX / parseInt(canvas.style.width || '1')) * GAME_WIDTH;
+            const canvasWidth = parseInt(canvas.style.width) || canvas.width;
+            touchX = (relativeX / canvasWidth) * GAME_WIDTH;
             useTouch = true;
             useMouse = false;
         }
@@ -852,17 +916,30 @@
             
             // Create gradient background
             const gradient = ctx.createLinearGradient(0, 0, GAME_WIDTH, GAME_HEIGHT);
-            gradient.addColorStop(0, `hsl(${backgroundEffects.hue}, 80%, 20%)`);
-            gradient.addColorStop(1, `hsl(${(backgroundEffects.hue + 180) % 360}, 80%, 20%)`);
+            gradient.addColorStop(0, `hsl(${backgroundEffects.hue}, 80%, 10%)`); // Darker for cosmic feel
+            gradient.addColorStop(1, `hsl(${(backgroundEffects.hue + 180) % 360}, 80%, 5%)`); // Even darker at bottom
             
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // Draw stars
+            for (let i = 0; i < backgroundEffects.stars.length; i++) {
+                const star = backgroundEffects.stars[i];
+                
+                // Twinkle effect
+                star.brightness = 0.2 + (0.8 * Math.abs(Math.sin(Date.now() * star.twinkleSpeed)));
+                
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+                ctx.fill();
+            }
             
             // Draw fractal-like patterns
             for (let i = 0; i < backgroundEffects.fractals.length; i++) {
                 const fractal = backgroundEffects.fractals[i];
                 
-                // Update fractal position at a slower rate
+                // Update fractal position and color at a slower rate
                 fractal.angle += fractal.speed * 0.01;
                 fractal.x = GAME_WIDTH / 2 + Math.cos(fractal.angle) * 200;
                 fractal.y = GAME_HEIGHT / 2 + Math.sin(fractal.angle) * 150;
@@ -990,7 +1067,7 @@
                         }
                     }
                     
-                    // Add sparkle for power-up bricks with slower animation
+                    // Add sparkle for power-up bricks (slower animation)
                     if (brick.type === 'powerUp') {
                         const sparkleSize = 4 + Math.sin(Date.now() / 800) * 2; // Much slower sparkle animation
                         ctx.fillStyle = '#FFFFFF';
@@ -1106,10 +1183,16 @@
             }
             
             // Keep target within bounds
-            paddle.targetX = Math.max(0, Math.min(paddle.targetX, GAME_WIDTH - paddle.width));
+            if (paddle.targetX < 0) {
+                paddle.targetX = 0;
+            } else if (paddle.targetX + paddle.width > GAME_WIDTH) {
+                paddle.targetX = GAME_WIDTH - paddle.width;
+            }
             
-            // Smooth movement with easing (increased smoothness)
-            paddle.x += (paddle.targetX - paddle.x) * 0.15; // Lower value = smoother movement
+            // Smoothly interpolate paddle position to target
+            // Lower value = smoother but slower movement (0.05-0.15 is good for smooth feel)
+            const easing = 0.12;
+            paddle.x += (paddle.targetX - paddle.x) * easing;
         }
         
         function updateBalls() {
@@ -1130,7 +1213,7 @@
                 // Check for collisions with walls
                 if (ball.x + ball.radius > GAME_WIDTH || ball.x - ball.radius < 0) {
                     ball.dx = -ball.dx;
-                    sounds.wall.play();
+                    playSound('wall');
                     
                     // Add particles for wall collision
                     createParticles(ball.x, ball.y, 5, '#FFFFFF');
@@ -1138,7 +1221,7 @@
                 
                 if (ball.y - ball.radius < 0) {
                     ball.dy = -ball.dy;
-                    sounds.wall.play();
+                    playSound('wall');
                     
                     // Add particles for wall collision
                     createParticles(ball.x, ball.y, 5, '#FFFFFF');
@@ -1163,7 +1246,7 @@
                     ball.dy = -Math.cos(angle) * speed;
                     
                     // Play paddle sound
-                    sounds.paddle.play();
+                    playSound('paddle');
                     
                     // Add particles for paddle collision
                     createParticles(ball.x, ball.y, 10, `hsl(${backgroundEffects.hue}, 100%, 70%)`);
@@ -1240,7 +1323,7 @@
                             }
                             
                             // Play brick sound
-                            sounds.brick.play();
+                            playSound('brick');
                             
                             // Check if all bricks are destroyed
                             if (bricks.every(b => !b.visible)) {
@@ -1311,7 +1394,7 @@
                     powerUps.splice(i, 1);
                     
                     // Play power-up sound
-                    sounds.powerUp.play();
+                    playSound('powerUp');
                     
                     // Create particles
                     createParticles(powerUp.x, powerUp.y, 15, powerUp.color);
@@ -1382,7 +1465,7 @@
                     // Add an extra life
                     lives++;
                     updateHUD();
-                    sounds.extraLife.play();
+                    playSound('extraLife');
                     break;
             }
         }
@@ -1405,7 +1488,7 @@
             // Clear canvas
             ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
             
-            // Draw trippy background
+            // Draw cosmic background
             drawBackground();
             
             // Update fractal positions at a slower rate
