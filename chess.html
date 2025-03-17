@@ -1,88 +1,1560 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LSD Trippy Amazing Chess</title>
-    <!-- Optional: Link to your CSS file -->
-    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash/4.17.21/lodash.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #background-canvas { z-index: 1; }
+        #fractal-canvas { z-index: 2; }
+        #trails-canvas { z-index: 3; }
+        
+        .game-container {
+            position: relative;
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .game-title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 0.5rem;
+            color: white;
+        }
+        
+        .controls label {
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+        
+        .controls select, .controls button {
+            padding: 0.25rem;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 0.25rem;
+        }
+        
+        .game-status {
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 0.25rem 1rem;
+            border-radius: 9999px;
+            margin-bottom: 0.5rem;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .game-board-container {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .captured-pieces {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            width: 3rem;
+            height: 24rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .captured-piece {
+            font-size: 1.5rem;
+        }
+        
+        .chess-board {
+            position: relative;
+            transition: transform 0.2s;
+        }
+        
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            border: 4px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            width: 480px;
+            height: 480px;
+        }
+        
+        .board-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .coordinate-label {
+            position: absolute;
+            font-size: 0.75rem;
+            font-weight: bold;
+            opacity: 0.6;
+        }
+        
+        .row-label {
+            left: 0.25rem;
+            top: 0;
+        }
+        
+        .col-label {
+            right: 0.25rem;
+            bottom: 0;
+        }
+        
+        .chess-piece {
+            font-size: 2.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .move-indicator {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        
+        .move-circle {
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .move-history {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            flex-grow: 1;
+            overflow-y: auto;
+            height: 18rem;
+        }
+        
+        .history-title {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            text-align: center;
+        }
+        
+        .move-entry {
+            font-size: 0.875rem;
+        }
+        
+        .game-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .game-button {
+            padding: 0.5rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .game-over {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 40;
+        }
+        
+        .game-over-modal {
+            padding: 2rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+        
+        .game-over-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        
+        .game-over-message {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .play-again-button {
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            font-size: 1.25rem;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+            100% { transform: scale(0.95); opacity: 0.7; }
+        }
+        
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <canvas id="background-canvas"></canvas>
+        <canvas id="fractal-canvas"></canvas>
+        <canvas id="trails-canvas"></canvas>
+        
+        <div class="game-container">
+            <h1 id="game-title" class="game-title">LSD Trippy Amazing Chess</h1>
+            
+            <div id="controls" class="controls">
+                <div>
+                    <label>Difficulty:</label>
+                    <select id="difficulty-select">
+                        <option>EASY</option>
+                        <option selected>MEDIUM</option>
+                        <option>HARD</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label>Trip Level:</label>
+                    <input id="trip-level" type="range" min="20" max="100" value="80" style="width: 8rem;">
+                </div>
+                
+                <div>
+                    <label>Move Speed:</label>
+                    <select id="move-delay">
+                        <option value="2000">Slow</option>
+                        <option value="1000" selected>Medium</option>
+                        <option value="500">Fast</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label>Auto-Play:</label>
+                    <button id="auto-play-button" class="bg-red-700">OFF</button>
+                </div>
+                
+                <button id="hide-controls">Hide Controls</button>
+            </div>
+            
+            <button id="show-controls" class="mb-2" style="display: none; color: white; margin-bottom: 0.5rem;">Show Controls</button>
+            
+            <div id="game-status" class="game-status">
+                <span>Turn: White</span>
+            </div>
+            
+            <div class="game-board-container">
+                <!-- Captured white pieces -->
+                <div id="white-captured" class="captured-pieces"></div>
+                
+                <!-- Chess board -->
+                <div id="chess-board" class="chess-board">
+                    <div id="board-grid" class="board-grid"></div>
+                </div>
+                
+                <div class="flex flex-col h-96 gap-2">
+                    <!-- Captured black pieces -->
+                    <div id="black-captured" class="captured-pieces"></div>
+                    
+                    <!-- Move history -->
+                    <div id="move-history" class="move-history">
+                        <h3 class="history-title">Move History</h3>
+                        <!-- Move entries will be added here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-buttons">
+                <button id="reset-button" class="game-button">Reset Game</button>
+                <button id="toggle-autoplay" class="game-button">Start Auto-Play</button>
+            </div>
+        </div>
+        
+        <!-- Game over overlay (hidden by default) -->
+        <div id="game-over" class="game-over" style="display: none;">
+            <div id="game-over-modal" class="game-over-modal">
+                <h2 id="game-over-title" class="game-over-title">Checkmate!</h2>
+                <p id="game-over-message" class="game-over-message">White wins!</p>
+                <button id="play-again" class="play-again-button">Play Again</button>
+            </div>
+        </div>
+    </div>
 
-    <!-- Load React & ReactDOM from CDN -->
-    <script
-      crossorigin
-      src="https://unpkg.com/react@17/umd/react.development.js"
-    ></script>
-    <script
-      crossorigin
-      src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"
-    ></script>
-    <!-- Load Lodash -->
-    <script src="https://unpkg.com/lodash/lodash.min.js"></script>
-    <!-- Load Babel for in-browser JSX transformation -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  </head>
-  <body>
-    <div id="root"></div>
+    <script>
+        // Chess piece Unicode characters
+        const PIECES = {
+            'wk': '♔', 'wq': '♕', 'wr': '♖', 'wb': '♗', 'wn': '♘', 'wp': '♙',
+            'bk': '♚', 'bq': '♛', 'br': '♜', 'bb': '♝', 'bn': '♞', 'bp': '♟'
+        };
 
-    <!-- Your React code goes here.
-         Note: Remove any import statements (like "import React from 'react';")
-         since Babel standalone doesn’t support module imports.
-         Instead, use the global variables (React, ReactDOM, _). -->
-    <script type="text/babel">
-      // Chess piece Unicode characters
-      const PIECES = {
-        'wk': '♔', 'wq': '♕', 'wr': '♖', 'wb': '♗', 'wn': '♘', 'wp': '♙',
-        'bk': '♚', 'bq': '♛', 'br': '♜', 'bb': '♝', 'bn': '♞', 'bp': '♟'
-      };
+        // Initial board setup
+        const initialBoard = [
+            ['br', 'bn', 'bb', 'bq', 'bk', 'bb', 'bn', 'br'],
+            ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp'],
+            [null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null],
+            [null, null, null, null, null, null, null, null],
+            ['wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp'],
+            ['wr', 'wn', 'wb', 'wq', 'wk', 'wb', 'wn', 'wr']
+        ];
 
-      // Initial board setup
-      const initialBoard = [
-        ['br', 'bn', 'bb', 'bq', 'bk', 'bb', 'bn', 'br'],
-        ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp'],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        ['wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp'],
-        ['wr', 'wn', 'wb', 'wq', 'wk', 'wb', 'wn', 'wr']
-      ];
+        // Game state
+        let board = JSON.parse(JSON.stringify(initialBoard));
+        let selectedPiece = null;
+        let possibleMoves = [];
+        let turn = 'w'; // 'w' for white, 'b' for black
+        let gameState = 'playing'; // 'playing', 'check', 'checkmate', 'stalemate'
+        let difficulty = 'MEDIUM';
+        let tripLevel = 80;
+        let capturedPieces = { w: [], b: [] };
+        let moveHistory = [];
+        let hueRotation = 0;
+        let saturation = 100;
+        let pulseEffect = 0;
+        let moveTrails = [];
+        let fractals = [];
+        let showControls = true;
+        let lastMove = null;
+        let autoPlay = false;
+        let aiThinking = false;
+        let moveDelay = 1000;
 
-      function TripChess() {
-        const [board, setBoard] = React.useState(initialBoard);
-        const [selectedPiece, setSelectedPiece] = React.useState(null);
-        const [possibleMoves, setPossibleMoves] = React.useState([]);
-        const [turn, setTurn] = React.useState('w');
-        const [gameState, setGameState] = React.useState('playing');
-        const [difficulty, setDifficulty] = React.useState('MEDIUM');
-        const [tripLevel, setTripLevel] = React.useState(60);
-        const [capturedPieces, setCapturedPieces] = React.useState({ w: [], b: [] });
-        const [moveHistory, setMoveHistory] = React.useState([]);
-        const [hueRotation, setHueRotation] = React.useState(0);
-        const [saturation, setSaturation] = React.useState(100);
-        const [pulseEffect, setPulseEffect] = React.useState(0);
-        const [lastMove, setLastMove] = React.useState(null);
-        const [autoPlay, setAutoPlay] = React.useState(false);
-        const [aiThinking, setAiThinking] = React.useState(false);
-        const [moveDelay, setMoveDelay] = React.useState(1000);
+        // DOM elements
+        const backgroundCanvas = document.getElementById('background-canvas');
+        const fractalCanvas = document.getElementById('fractal-canvas');
+        const trailsCanvas = document.getElementById('trails-canvas');
+        const gameTitle = document.getElementById('game-title');
+        const controlsDiv = document.getElementById('controls');
+        const showControlsButton = document.getElementById('show-controls');
+        const hideControlsButton = document.getElementById('hide-controls');
+        const difficultySelect = document.getElementById('difficulty-select');
+        const tripLevelInput = document.getElementById('trip-level');
+        const moveDelaySelect = document.getElementById('move-delay');
+        const autoPlayButton = document.getElementById('auto-play-button');
+        const gameStatusSpan = document.getElementById('game-status');
+        const whiteCapturedDiv = document.getElementById('white-captured');
+        const blackCapturedDiv = document.getElementById('black-captured');
+        const chessBoard = document.getElementById('chess-board');
+        const boardGrid = document.getElementById('board-grid');
+        const moveHistoryDiv = document.getElementById('move-history');
+        const resetButton = document.getElementById('reset-button');
+        const toggleAutoplayButton = document.getElementById('toggle-autoplay');
+        const gameOverDiv = document.getElementById('game-over');
+        const gameOverTitle = document.getElementById('game-over-title');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const playAgainButton = document.getElementById('play-again');
 
-        const boardRef = React.useRef(null);
-        const backgroundCanvasRef = React.useRef(null);
+        // Generate initial fractals
+        fractals = Array(8).fill().map(() => ({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            size: Math.random() * 100 + 50,
+            rotation: Math.random() * 360,
+            speed: Math.random() * 0.5 + 0.1,
+            hue: Math.random() * 360,
+            complexity: Math.random() * 5 + 3
+        }));
 
-        // (Place all your useEffect hooks, event handlers, helper functions,
-        // and JSX rendering here exactly as in your original code,
-        // but without the "import" statements.)
+        // Initialize the game board UI
+        function initializeBoard() {
+            boardGrid.innerHTML = '';
+            
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('board-cell');
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    
+                    // Add coordinate labels
+                    if (col === 0) {
+                        const rowLabel = document.createElement('span');
+                        rowLabel.classList.add('coordinate-label', 'row-label');
+                        rowLabel.textContent = 8 - row;
+                        cell.appendChild(rowLabel);
+                    }
+                    
+                    if (row === 7) {
+                        const colLabel = document.createElement('span');
+                        colLabel.classList.add('coordinate-label', 'col-label');
+                        colLabel.textContent = String.fromCharCode(97 + col);
+                        cell.appendChild(colLabel);
+                    }
+                    
+                    cell.addEventListener('click', () => handleCellClick(row, col));
+                    boardGrid.appendChild(cell);
+                }
+            }
+            
+            updateBoardUI();
+        }
 
-        // For brevity, this example omits the complete code.
-        return (
-          <div className="relative w-full h-screen overflow-hidden bg-black flex items-center justify-center">
-            <h1 style={{ color: `hsl(${hueRotation}, 100%, 70%)` }}>
-              LSD Trippy Amazing Chess
-            </h1>
-            {/* Rest of your JSX markup */}
-          </div>
-        );
-      }
+        // Update board UI based on game state
+        function updateBoardUI() {
+            // Update board cells
+            const cells = boardGrid.querySelectorAll('.board-cell');
+            cells.forEach(cell => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                
+                const isSelected = selectedPiece && selectedPiece[0] === row && selectedPiece[1] === col;
+                const isPossibleMove = possibleMoves.some(
+                    ([moveRow, moveCol]) => moveRow === row && moveCol === col
+                );
+                const isLastMoveFrom = lastMove && lastMove.from[0] === row && lastMove.from[1] === col;
+                const isLastMoveTo = lastMove && lastMove.to[0] === row && lastMove.to[1] === col;
+                
+                // Clear existing content (except coordinate labels)
+                Array.from(cell.childNodes).forEach(node => {
+                    if (!node.classList || (!node.classList.contains('coordinate-label'))) {
+                        cell.removeChild(node);
+                    }
+                });
+                
+                // Set cell background color
+                cell.style.backgroundColor = getCellColor(row, col, isSelected, isPossibleMove, isLastMoveFrom, isLastMoveTo);
+                
+                // Add box shadow for possible moves
+                cell.style.boxShadow = isPossibleMove ? 
+                    `inset 0 0 15px hsl(${(hueRotation + 60) % 360}, 100%, 70%)` : 'none';
+                
+                // Add chess piece if any
+                if (board[row][col]) {
+                    const pieceDiv = document.createElement('div');
+                    pieceDiv.classList.add('chess-piece');
+                    pieceDiv.textContent = PIECES[board[row][col]];
+                    
+                    // Apply piece style
+                    const pieceStyle = getPieceStyle(row, col, isSelected);
+                    Object.assign(pieceDiv.style, pieceStyle);
+                    
+                    cell.appendChild(pieceDiv);
+                }
+                
+                // Add move indicator for possible moves
+                if (isPossibleMove) {
+                    const moveIndicator = document.createElement('div');
+                    moveIndicator.classList.add('move-indicator');
+                    
+                    const moveCircle = document.createElement('div');
+                    moveCircle.classList.add('move-circle');
+                    moveCircle.style.width = board[row][col] ? '90%' : '30%';
+                    moveCircle.style.height = board[row][col] ? '90%' : '30%';
+                    moveCircle.style.border = `2px solid hsla(${(hueRotation + 120) % 360}, 100%, 70%, 0.7)`;
+                    
+                    moveIndicator.appendChild(moveCircle);
+                    cell.appendChild(moveIndicator);
+                }
+            });
+            
+            // Update captured pieces
+            updateCapturedPiecesUI();
+            
+            // Update game status
+            updateGameStatusUI();
+            
+            // Update move history
+            updateMoveHistoryUI();
+            
+            // Update board glow effect
+            const glowStyle = getBoardGlowStyle();
+            Object.assign(chessBoard.style, glowStyle);
+            chessBoard.style.transform = `scale(${1 + pulseEffect * 0.05})`;
+            
+            // Update game title color
+            gameTitle.style.color = `hsl(${hueRotation}, 100%, 70%)`;
+            gameTitle.style.textShadow = `
+                0 0 10px hsl(${hueRotation}, 100%, 50%),
+                0 0 20px hsl(${(hueRotation + 60) % 360}, 100%, 50%),
+                0 0 30px hsl(${(hueRotation + 180) % 360}, 100%, 50%)
+            `;
+            gameTitle.style.transform = `scale(${1 + pulseEffect * 0.2})`;
+            
+            // Update control borders
+            whiteCapturedDiv.style.borderLeft = `2px solid hsl(${hueRotation}, 70%, 60%)`;
+            whiteCapturedDiv.style.borderRight = `2px solid hsl(${(hueRotation + 180) % 360}, 70%, 60%)`;
+            
+            blackCapturedDiv.style.borderLeft = `2px solid hsl(${(hueRotation + 90) % 360}, 70%, 60%)`;
+            blackCapturedDiv.style.borderRight = `2px solid hsl(${(hueRotation + 270) % 360}, 70%, 60%)`;
+            
+            moveHistoryDiv.style.borderTop = `2px solid hsl(${(hueRotation + 45) % 360}, 70%, 60%)`;
+            moveHistoryDiv.style.borderBottom = `2px solid hsl(${(hueRotation + 225) % 360}, 70%, 60%)`;
+            
+            // Update buttons
+            resetButton.style.background = `linear-gradient(45deg, 
+                hsl(${hueRotation}, 100%, 50%), 
+                hsl(${(hueRotation + 60) % 360}, 100%, 50%), 
+                hsl(${(hueRotation + 120) % 360}, 100%, 50%), 
+                hsl(${(hueRotation + 180) % 360}, 100%, 50%), 
+                hsl(${(hueRotation + 240) % 360}, 100%, 50%),
+                hsl(${(hueRotation + 300) % 360}, 100%, 50%),
+                hsl(${hueRotation}, 100%, 50%)
+            )`;
+            resetButton.style.backgroundSize = '400% 400%';
+            resetButton.style.animation = 'gradient-shift 3s linear infinite';
+            resetButton.style.boxShadow = `0 0 20px hsl(${hueRotation}, 100%, 50%)`;
+            resetButton.style.transform = `scale(${1 + Math.sin(Date.now() * 0.003) * 0.05})`;
+            
+            toggleAutoplayButton.style.background = autoPlay ? 
+                `linear-gradient(45deg, hsl(120, 100%, 30%), hsl(140, 100%, 40%))` : 
+                `linear-gradient(45deg, hsl(0, 100%, 40%), hsl(20, 100%, 50%))`;
+            toggleAutoplayButton.style.boxShadow = `0 0 20px hsl(${autoPlay ? 120 : 0}, 100%, 50%)`;
+            toggleAutoplayButton.textContent = autoPlay ? 'Stop Auto-Play' : 'Start Auto-Play';
+        }
 
-      ReactDOM.render(<TripChess />, document.getElementById('root'));
+        // Update captured pieces UI
+        function updateCapturedPiecesUI() {
+            whiteCapturedDiv.innerHTML = '';
+            blackCapturedDiv.innerHTML = '';
+            
+            capturedPieces.b.forEach((piece, i) => {
+                const pieceDiv = document.createElement('div');
+                pieceDiv.classList.add('captured-piece');
+                pieceDiv.textContent = PIECES[piece];
+                pieceDiv.style.color = 'white';
+                pieceDiv.style.textShadow = `0 0 5px hsl(${(hueRotation + i * 20) % 360}, 100%, 70%)`;
+                whiteCapturedDiv.appendChild(pieceDiv);
+            });
+            
+            capturedPieces.w.forEach((piece, i) => {
+                const pieceDiv = document.createElement('div');
+                pieceDiv.classList.add('captured-piece');
+                pieceDiv.textContent = PIECES[piece];
+                pieceDiv.style.color = 'black';
+                pieceDiv.style.textShadow = `0 0 5px hsl(${(hueRotation + i * 20) % 360}, 100%, 70%)`;
+                blackCapturedDiv.appendChild(pieceDiv);
+            });
+        }
+
+        // Update game status UI
+        function updateGameStatusUI() {
+            let statusText = '';
+            
+            if (gameState === 'checkmate') {
+                statusText = `<span style="color: #FF9999;">Checkmate! ${turn === 'b' ? 'White' : 'Black'} wins!</span>`;
+            } else if (gameState === 'stalemate') {
+                statusText = `<span style="color: #FFCC99;">Stalemate! Game ends in a draw.</span>`;
+            } else if (gameState === 'check') {
+                statusText = `<span style="color: #FFCC99;">${turn === 'w' ? 'White' : 'Black'} is in check!</span>`;
+            } else {
+                statusText = `<span style="color: hsl(${turn === 'w' ? 60 : 240}, 100%, 80%);">
+                    Turn: ${turn === 'w' ? 'White' : 'Black'} ${aiThinking ? ' (Thinking...)' : ''}
+                </span>`;
+            }
+            
+            gameStatusSpan.innerHTML = statusText;
+        }
+
+        // Update move history UI
+        function updateMoveHistoryUI() {
+            // Keep the header but clear the moves
+            moveHistoryDiv.innerHTML = `<h3 class="history-title" style="color: hsl(${hueRotation}, 100%, 80%)">Move History</h3>`;
+            
+            moveHistory.forEach((move, i) => {
+                const moveDiv = document.createElement('div');
+                moveDiv.classList.add('move-entry');
+                moveDiv.style.color = i % 2 === 0 ? 'white' : 'rgb(200, 200, 255)';
+                moveDiv.style.textShadow = `0 0 3px hsl(${(hueRotation + i * 10) % 360}, 70%, 50%)`;
+                moveDiv.textContent = `${i % 2 === 0 ? `${Math.floor(i/2)+1}.` : ''} ${move}`;
+                moveHistoryDiv.appendChild(moveDiv);
+            });
+        }
+
+        // Background animation with fractal patterns
+        function startBackgroundAnimation() {
+            backgroundCanvas.width = window.innerWidth;
+            backgroundCanvas.height = window.innerHeight;
+            fractalCanvas.width = window.innerWidth;
+            fractalCanvas.height = window.innerHeight;
+            
+            const ctx = backgroundCanvas.getContext('2d');
+            const fractalCtx = fractalCanvas.getContext('2d');
+            let time = 0;
+            
+            const drawFractal = (x, y, size, depth, rotation, hue) => {
+                if (depth <= 0) return;
+                
+                const intensity = tripLevel / 100;
+                const branchLength = size * (0.7 + Math.sin(time * 0.2) * 0.1);
+                
+                fractalCtx.save();
+                fractalCtx.translate(x, y);
+                fractalCtx.rotate(rotation * Math.PI / 180);
+                
+                // Draw branch
+                fractalCtx.strokeStyle = `hsla(${hue}, ${saturation}%, 50%, ${intensity * 0.5})`;
+                fractalCtx.lineWidth = depth;
+                fractalCtx.beginPath();
+                fractalCtx.moveTo(0, 0);
+                fractalCtx.lineTo(0, -branchLength);
+                fractalCtx.stroke();
+                
+                // Draw sub-fractals
+                const newX = 0;
+                const newY = -branchLength;
+                const newSize = size * 0.7;
+                
+                drawFractal(newX, newY, newSize, depth - 1, rotation - 30 + Math.sin(time) * 10, (hue + 20) % 360);
+                drawFractal(newX, newY, newSize, depth - 1, rotation + 30 + Math.sin(time) * 10, (hue + 40) % 360);
+                
+                fractalCtx.restore();
+            };
+            
+            const drawBackground = () => {
+                time += 0.01;
+                const intensity = tripLevel / 100;
+                
+                ctx.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+                
+                // Draw trippy background with flowing patterns
+                for (let i = 0; i < 12; i++) {
+                    const radius = 150 + Math.sin(time * (i + 1) * 0.3) * 100 * intensity;
+                    const x = backgroundCanvas.width / 2 + Math.cos(time * 0.5 * (i + 1)) * 200 * intensity;
+                    const y = backgroundCanvas.height / 2 + Math.sin(time * 0.3 * (i + 1)) * 200 * intensity;
+                    
+                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                    const hue1 = (time * 30 + i * 30) % 360;
+                    const hue2 = (hue1 + 60) % 360;
+                    const hue3 = (hue1 + 180) % 360;
+                    
+                    gradient.addColorStop(0, `hsla(${hue1}, ${saturation}%, 70%, ${0.3 * intensity})`);
+                    gradient.addColorStop(0.5, `hsla(${hue2}, ${saturation}%, 60%, ${0.2 * intensity})`);
+                    gradient.addColorStop(1, `hsla(${hue3}, ${saturation}%, 50%, 0)`);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    
+                    // Create flowing blob shapes
+                    ctx.moveTo(
+                        x + radius * Math.cos(0),
+                        y + radius * Math.sin(0)
+                    );
+                    
+                    for (let j = 0; j <= 360; j += 10) {
+                        const angle = j * Math.PI / 180;
+                        const radiusVariation = 1 + Math.sin(angle * 3 + time) * 0.2 * intensity;
+                        ctx.lineTo(
+                            x + radius * radiusVariation * Math.cos(angle),
+                            y + radius * radiusVariation * Math.sin(angle)
+                        );
+                    }
+                    
+                    ctx.fill();
+                }
+                
+                // Draw moving wave patterns
+                ctx.strokeStyle = `hsla(${(time * 50) % 360}, ${saturation}%, 50%, ${0.2 * intensity})`;
+                ctx.lineWidth = 2;
+                
+                for (let wave = 0; wave < 5; wave++) {
+                    ctx.beginPath();
+                    for (let x = 0; x < backgroundCanvas.width; x += 10) {
+                        const y = backgroundCanvas.height / 2 
+                            + Math.sin(x * 0.01 + time + wave) * 50 * intensity
+                            + Math.cos(x * 0.02 - time * 1.5) * 30 * intensity;
+                        
+                        if (x === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.stroke();
+                }
+                
+                // Draw fractals
+                fractalCtx.clearRect(0, 0, fractalCanvas.width, fractalCanvas.height);
+                
+                const newFractals = [...fractals];
+                for (let i = 0; i < newFractals.length; i++) {
+                    const f = newFractals[i];
+                    
+                    // Move fractals
+                    f.x += Math.sin(time * f.speed) * 2;
+                    f.y += Math.cos(time * f.speed) * 2;
+                    f.rotation += 0.2;
+                    f.hue = (f.hue + 0.5) % 360;
+                    
+                    // Keep fractals in bounds
+                    if (f.x < -100) f.x = backgroundCanvas.width + 100;
+                    if (f.x > backgroundCanvas.width + 100) f.x = -100;
+                    if (f.y < -100) f.y = backgroundCanvas.height + 100;
+                    if (f.y > backgroundCanvas.height + 100) f.y = -100;
+                    
+                    // Draw only if trip level is high enough
+                    if (tripLevel > 40) {
+                        drawFractal(
+                            f.x, 
+                            f.y, 
+                            f.size * (intensity * 0.5 + 0.5), 
+                            Math.floor(f.complexity * (intensity * 0.5 + 0.5)), 
+                            f.rotation, 
+                            f.hue
+                        );
+                    }
+                }
+                
+                fractals = newFractals;
+                
+                requestAnimationFrame(drawBackground);
+            };
+            
+            drawBackground();
+        }
+
+        // Trails animation
+        function startTrailsAnimation() {
+            trailsCanvas.width = window.innerWidth;
+            trailsCanvas.height = window.innerHeight;
+            
+            const ctx = trailsCanvas.getContext('2d');
+            
+            const drawTrails = () => {
+                const intensity = tripLevel / 100;
+                
+                // Fade out existing trails
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, trailsCanvas.width, trailsCanvas.height);
+                
+                // Draw trails
+                moveTrails = moveTrails.filter(trail => {
+                    const progress = trail.progress;
+                    const size = (1 - progress) * 40 * intensity;
+                    
+                    // Skip if too small
+                    if (size < 1) return false;
+                    
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'lighter';
+                    
+                    // Glow effect
+                    const gradient = ctx.createRadialGradient(
+                        trail.x, trail.y, 0,
+                        trail.x, trail.y, size * 2
+                    );
+                    
+                    gradient.addColorStop(0, `hsla(${trail.hue}, ${saturation}%, 70%, ${(1 - progress) * 0.8})`);
+                    gradient.addColorStop(1, `hsla(${trail.hue}, ${saturation}%, 50%, 0)`);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(trail.x, trail.y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.restore();
+                    
+                    // Update trail
+                    trail.progress += 0.01;
+                    
+                    return trail.progress < 1;
+                });
+                
+                requestAnimationFrame(drawTrails);
+            };
+            
+            drawTrails();
+        }
+
+        // Start color cycling
+        function startColorCycling() {
+            setInterval(() => {
+                hueRotation = (hueRotation + 2) % 360;
+                saturation = 80 + Math.sin(Date.now() * 0.001) * 20;
+                updateBoardUI();
+            }, 50);
+        }
+
+        // Basic move validation
+        function getValidMoves(row, col, currentBoard = board) {
+            const piece = currentBoard[row][col];
+            if (!piece) return [];
+            
+            const pieceType = piece[1];
+            const pieceColor = piece[0];
+            
+            // Only allow moving pieces of current turn
+            if (pieceColor !== turn && !autoPlay) return [];
+            
+            const moves = [];
+            
+            // Simplified move logic for demo
+            if (pieceType === 'p') { // Pawn
+                const direction = pieceColor === 'w' ? -1 : 1;
+                
+                // Move forward one square
+                if (row + direction >= 0 && row + direction < 8 && !currentBoard[row + direction][col]) {
+                    moves.push([row + direction, col]);
+                    
+                    // Move forward two squares from starting position
+                    if ((pieceColor === 'w' && row === 6) || (pieceColor === 'b' && row === 1)) {
+                        if (row + 2 * direction >= 0 && row + 2 * direction < 8 && !currentBoard[row + 2 * direction][col]) {
+                            moves.push([row + 2 * direction, col]);
+                        }
+                    }
+                }
+                
+                // Capture diagonally
+                for (let offset of [-1, 1]) {
+                    if (col + offset >= 0 && col + offset < 8 && row + direction >= 0 && row + direction < 8) {
+                        const targetPiece = currentBoard[row + direction][col + offset];
+                        if (targetPiece && targetPiece[0] !== pieceColor) {
+                            moves.push([row + direction, col + offset]);
+                        }
+                    }
+                }
+            } else if (pieceType === 'r') { // Rook
+                // Horizontal and vertical movement
+                for (let direction of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+                    let [dr, dc] = direction;
+                    let r = row + dr;
+                    let c = col + dc;
+                    
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (!currentBoard[r][c]) {
+                            moves.push([r, c]);
+                        } else {
+                            if (currentBoard[r][c][0] !== pieceColor) {
+                                moves.push([r, c]);
+                            }
+                            break;
+                        }
+                        r += dr;
+                        c += dc;
+                    }
+                }
+            } else if (pieceType === 'n') { // Knight
+                const knightMoves = [
+                    [-2, -1], [-2, 1], [-1, -2], [-1, 2],
+                    [1, -2], [1, 2], [2, -1], [2, 1]
+                ];
+                
+                for (let [dr, dc] of knightMoves) {
+                    const r = row + dr;
+                    const c = col + dc;
+                    if (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (!currentBoard[r][c] || currentBoard[r][c][0] !== pieceColor) {
+                            moves.push([r, c]);
+                        }
+                    }
+                }
+            } else if (pieceType === 'b') { // Bishop
+                // Diagonal movement
+                for (let direction of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+                    let [dr, dc] = direction;
+                    let r = row + dr;
+                    let c = col + dc;
+                    
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (!currentBoard[r][c]) {
+                            moves.push([r, c]);
+                        } else {
+                            if (currentBoard[r][c][0] !== pieceColor) {
+                                moves.push([r, c]);
+                            }
+                            break;
+                        }
+                        r += dr;
+                        c += dc;
+                    }
+                }
+            } else if (pieceType === 'q') { // Queen
+                // Combine rook and bishop movement
+                for (let direction of [
+                    [0, 1], [1, 0], [0, -1], [-1, 0],
+                    [1, 1], [1, -1], [-1, 1], [-1, -1]
+                ]) {
+                    let [dr, dc] = direction;
+                    let r = row + dr;
+                    let c = col + dc;
+                    
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                        if (!currentBoard[r][c]) {
+                            moves.push([r, c]);
+                        } else {
+                            if (currentBoard[r][c][0] !== pieceColor) {
+                                moves.push([r, c]);
+                            }
+                            break;
+                        }
+                        r += dr;
+                        c += dc;
+                    }
+                }
+            } else if (pieceType === 'k') { // King
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        
+                        const r = row + dr;
+                        const c = col + dc;
+                        if (r >= 0 && r < 8 && c >= 0 && c < 8) {
+                            if (!currentBoard[r][c] || currentBoard[r][c][0] !== pieceColor) {
+                                moves.push([r, c]);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return moves;
+        }
+
+        // Check if the king is in check
+        function isInCheck(color, testBoard = board) {
+            // Find the king
+            let kingRow = -1;
+            let kingCol = -1;
+            
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if (testBoard[r][c] === `${color}k`) {
+                        kingRow = r;
+                        kingCol = c;
+                        break;
+                    }
+                }
+                if (kingRow !== -1) break;
+            }
+            
+            if (kingRow === -1) return false; // King not found (shouldn't happen in a valid game)
+            
+            // Check if any opponent piece can capture the king
+            const opponent = color === 'w' ? 'b' : 'w';
+            const originalTurn = turn;
+            
+            // Temporarily set turn to opponent to check their moves
+            turn = opponent;
+            
+            // Check each opponent piece
+            let isCheck = false;
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const piece = testBoard[r][c];
+                    if (piece && piece[0] === opponent) {
+                        // Get valid moves for this opponent piece
+                        const moves = getValidMoves(r, c, testBoard);
+                        
+                        // Check if any move can capture the king
+                        if (moves.some(([moveR, moveC]) => moveR === kingRow && moveC === kingCol)) {
+                            isCheck = true;
+                            break;
+                        }
+                    }
+                }
+                if (isCheck) break;
+            }
+            
+            // Reset turn
+            turn = originalTurn;
+            
+            return isCheck;
+        }
+
+        // Convert board coordinates to screen coordinates
+        function getBoardCoordinates(row, col) {
+            const rect = boardGrid.getBoundingClientRect();
+            const cellSize = rect.width / 8;
+            
+            return {
+                x: rect.left + col * cellSize + cellSize / 2,
+                y: rect.top + row * cellSize + cellSize / 2
+            };
+        }
+
+        // Add a new trail for piece movement
+        function addMoveTrail(fromRow, fromCol, toRow, toCol, hue) {
+            const fromCoord = getBoardCoordinates(fromRow, fromCol);
+            const toCoord = getBoardCoordinates(toRow, toCol);
+            
+            // Create trail points along the path
+            const trailPoints = 15; // More trail points for smoother effect
+            const newTrails = [];
+            
+            for (let i = 0; i < trailPoints; i++) {
+                const progress = i / trailPoints;
+                
+                // Add some randomness to trail positions for a more organic feel
+                const jitter = tripLevel / 200; // More trippy = more jitter
+                const jitterX = (Math.random() - 0.5) * jitter * 40;
+                const jitterY = (Math.random() - 0.5) * jitter * 40;
+                
+                newTrails.push({
+                    x: fromCoord.x + (toCoord.x - fromCoord.x) * progress + jitterX,
+                    y: fromCoord.y + (toCoord.y - fromCoord.y) * progress + jitterY,
+                    hue: (hue + i * 15) % 360,
+                    progress: Math.random() * 0.2 // Stagger the start times
+                });
+            }
+            
+            moveTrails = [...moveTrails, ...newTrails];
+        }
+
+        // Execute a move on the board
+        function executeMove(fromRow, fromCol, toRow, toCol, currentBoard = board) {
+            // Create a deep copy of the board
+            const newBoard = JSON.parse(JSON.stringify(currentBoard));
+            const movingPiece = newBoard[fromRow][fromCol];
+            
+            // Create move trail effect
+            addMoveTrail(fromRow, fromCol, toRow, toCol, 
+                        movingPiece[0] === 'w' ? hueRotation : (hueRotation + 180) % 360);
+            
+            // Capture logic
+            if (newBoard[toRow][toCol]) {
+                const capturedPiece = newBoard[toRow][toCol];
+                capturedPieces[movingPiece[0]].push(capturedPiece);
+                
+                // Create intense pulse effect on capture
+                pulseEffect = 1;
+                setTimeout(reducePulseEffect, 30);
+            }
+            
+            // Move the piece
+            newBoard[toRow][toCol] = movingPiece;
+            newBoard[fromRow][fromCol] = null;
+            
+            // Update move history
+            const pieceType = movingPiece[1].toUpperCase();
+            const fromSquare = `${String.fromCharCode(97 + fromCol)}${8 - fromRow}`;
+            const toSquare = `${String.fromCharCode(97 + toCol)}${8 - toRow}`;
+            moveHistory.push(`${pieceType} ${fromSquare}-${toSquare}`);
+            
+            // Record last move for highlighting
+            lastMove = { from: [fromRow, fromCol], to: [toRow, toCol] };
+            
+            return newBoard;
+        }
+
+        // Reduce pulse effect over time
+        function reducePulseEffect() {
+            if (pulseEffect > 0) {
+                pulseEffect = Math.max(0, pulseEffect - 0.05);
+                setTimeout(reducePulseEffect, 30);
+            }
+        }
+
+        // Handle click on a board cell
+        function handleCellClick(row, col) {
+            // Don't allow moves during AI turns or if game is over
+            if (turn === 'b' && !autoPlay) return;
+            if (gameState !== 'playing' && gameState !== 'check') return;
+            if (aiThinking) return;
+            
+            // If a piece is already selected
+            if (selectedPiece) {
+                const [selectedRow, selectedCol] = selectedPiece;
+                
+                // Check if clicked cell is a valid move
+                const isValidMove = possibleMoves.some(
+                    ([moveRow, moveCol]) => moveRow === row && moveCol === col
+                );
+                
+                if (isValidMove) {
+                    // Make the move
+                    board = executeMove(selectedRow, selectedCol, row, col);
+                    
+                    selectedPiece = null;
+                    possibleMoves = [];
+                    
+                    // Check if the move resulted in check
+                    const nextTurn = turn === 'w' ? 'b' : 'w';
+                    const inCheck = isInCheck(nextTurn, board);
+                    
+                    gameState = inCheck ? 'check' : 'playing';
+                    
+                    // Switch turns
+                    turn = nextTurn;
+                    updateBoardUI();
+                    
+                    // If AI's turn, schedule AI move
+                    if ((turn === 'b' || autoPlay) && gameState === 'playing') {
+                        aiThinking = true;
+                        updateBoardUI();
+                        
+                        setTimeout(() => {
+                            makeAIMove(turn);
+                            aiThinking = false;
+                            updateBoardUI();
+                        }, moveDelay);
+                    }
+                } else {
+                    // If clicking on another piece of the same color, select that piece instead
+                    if (board[row][col] && board[row][col][0] === turn) {
+                        selectedPiece = [row, col];
+                        possibleMoves = getValidMoves(row, col);
+                    } else {
+                        // Clicked on an invalid square, deselect
+                        selectedPiece = null;
+                        possibleMoves = [];
+                    }
+                    updateBoardUI();
+                }
+            } else {
+                // If no piece is selected, select the clicked piece if it belongs to the current player
+                if (board[row][col] && board[row][col][0] === turn) {
+                    selectedPiece = [row, col];
+                    possibleMoves = getValidMoves(row, col);
+                    updateBoardUI();
+                }
+            }
+        }
+
+        // Simple AI move generation
+        function makeAIMove(aiColor = 'b') {
+            if (gameState !== 'playing' && gameState !== 'check') return;
+            
+            const possibleAIMoves = [];
+            
+            // Find all possible moves for the AI's pieces
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if (board[row][col] && board[row][col][0] === aiColor) {
+                        const moves = getValidMoves(row, col);
+                        for (let [moveRow, moveCol] of moves) {
+                            // Create a test board to evaluate the move
+                            const testBoard = JSON.parse(JSON.stringify(board));
+                            testBoard[moveRow][moveCol] = testBoard[row][col];
+                            testBoard[row][col] = null;
+                            
+                            // Only consider moves that don't leave own king in check
+                            if (!isInCheck(aiColor, testBoard)) {
+                                possibleAIMoves.push({
+                                    from: [row, col],
+                                    to: [moveRow, moveCol],
+                                    piece: board[row][col],
+                                    capture: board[moveRow][moveCol],
+                                    score: calculateMoveScore([row, col], [moveRow, moveCol], board)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (possibleAIMoves.length === 0) {
+                // If no valid moves, check if king is in check (checkmate) or not (stalemate)
+                if (isInCheck(aiColor)) {
+                    gameState = 'checkmate';
+                    showGameOver();
+                } else {
+                    gameState = 'stalemate';
+                    showGameOver();
+                }
+                updateBoardUI();
+                return;
+            }
+            
+            // Sort moves by score (higher is better)
+            possibleAIMoves.sort((a, b) => b.score - a.score);
+            
+            // Choose a move based on difficulty
+            let selectedMove;
+            
+            if (difficulty === 'EASY') {
+                // For EASY, pick a random move from the top 70% of moves
+                const cutoff = Math.max(1, Math.floor(possibleAIMoves.length * 0.7));
+                const randomIndex = Math.floor(Math.random() * cutoff);
+                selectedMove = possibleAIMoves[randomIndex];
+            } 
+            else if (difficulty === 'MEDIUM') {
+                // For MEDIUM, pick a random move from the top 40% of moves
+                const cutoff = Math.max(1, Math.floor(possibleAIMoves.length * 0.4));
+                const randomIndex = Math.floor(Math.random() * cutoff);
+                selectedMove = possibleAIMoves[randomIndex];
+            }
+            else {
+                // For HARD, always pick the best move
+                selectedMove = possibleAIMoves[0];
+            }
+            
+            // Make the selected move
+            board = executeMove(
+                selectedMove.from[0], 
+                selectedMove.from[1], 
+                selectedMove.to[0], 
+                selectedMove.to[1]
+            );
+            
+            // Check if the move resulted in check
+            const nextTurn = aiColor === 'w' ? 'b' : 'w';
+            const inCheck = isInCheck(nextTurn, board);
+            
+            gameState = inCheck ? 'check' : 'playing';
+            
+            // Switch turns
+            turn = nextTurn;
+            
+            // Update UI
+            updateBoardUI();
+            
+            // If autoplay is enabled and it's not game over, schedule next move
+            if (autoPlay && gameState !== 'checkmate' && gameState !== 'stalemate') {
+                aiThinking = true;
+                updateBoardUI();
+                
+                setTimeout(() => {
+                    makeAIMove(turn);
+                    aiThinking = false;
+                }, moveDelay);
+            }
+        }
+
+        // Calculate move score for AI
+        function calculateMoveScore(from, to, currentBoard = board) {
+            const [fromRow, fromCol] = from;
+            const [toRow, toCol] = to;
+            const piece = currentBoard[fromRow][fromCol];
+            const pieceColor = piece[0];
+            const pieceType = piece[1];
+            const targetPiece = currentBoard[toRow][toCol];
+            
+            let score = 0;
+            
+            // Base piece values
+            const pieceValues = { 'p': 10, 'n': 30, 'b': 30, 'r': 50, 'q': 90, 'k': 900 };
+            
+            // Add value for piece being moved
+            score += pieceValues[pieceType] * 0.1;
+            
+            // Value captured pieces highly
+            if (targetPiece) {
+                score += pieceValues[targetPiece[1]] * 10;
+            }
+            
+            // Favor center control for all pieces
+            const centerDistance = Math.abs(toRow - 3.5) + Math.abs(toCol - 3.5);
+            score += (4 - centerDistance) * 2;
+            
+            // Bonus for advancing pawns
+            if (pieceType === 'p') {
+                const advancementValue = pieceColor === 'w' ? (6 - toRow) : (toRow - 1);
+                score += advancementValue * 2;
+                
+                // Extra bonus for pawns near promotion
+                if ((pieceColor === 'w' && toRow <= 1) || (pieceColor === 'b' && toRow >= 6)) {
+                    score += 30;
+                }
+            }
+            
+            // Knights are more valuable in crowded positions
+            if (pieceType === 'n') {
+                let crowdedSquares = 0;
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        if (currentBoard[r][c]) crowdedSquares++;
+                    }
+                }
+                if (crowdedSquares > 20) score += 5;
+            }
+            
+            // Bishops and queens like open diagonals
+            if (pieceType === 'b' || pieceType === 'q') {
+                const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+                let openDiagonals = 0;
+                
+                for (let [dr, dc] of directions) {
+                    let r = toRow + dr;
+                    let c = toCol + dc;
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8 && !currentBoard[r][c]) {
+                        openDiagonals++;
+                        r += dr;
+                        c += dc;
+                    }
+                }
+                
+                score += openDiagonals * (pieceType === 'b' ? 1 : 0.5);
+            }
+            
+            // Rooks and queens like open files
+            if (pieceType === 'r' || pieceType === 'q') {
+                const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+                let openLines = 0;
+                
+                for (let [dr, dc] of directions) {
+                    let r = toRow + dr;
+                    let c = toCol + dc;
+                    while (r >= 0 && r < 8 && c >= 0 && c < 8 && !currentBoard[r][c]) {
+                        openLines++;
+                        r += dr;
+                        c += dc;
+                    }
+                }
+                
+                score += openLines * (pieceType === 'r' ? 1 : 0.5);
+            }
+            
+            // King safety in early/middle game
+            if (pieceType === 'k') {
+                // Count number of pieces to determine game phase
+                let pieceCount = 0;
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        if (currentBoard[r][c]) pieceCount++;
+                    }
+                }
+                
+                // Early/middle game: keep king safe
+                if (pieceCount > 20) {
+                    // Penalize moving king to center
+                    score -= (4 - centerDistance) * 5;
+                    
+                    // Bonus for king in corner or edge
+                    if (toRow === 0 || toRow === 7 || toCol === 0 || toCol === 7) {
+                        score += 10;
+                    }
+                } 
+                // Endgame: king should be active
+                else {
+                    // In endgame, king should move toward center
+                    score += (4 - centerDistance) * 3;
+                }
+            }
+            
+            // Slightly randomize score to prevent predictable play
+            score += Math.random() * 2;
+            
+            return score;
+        }
+
+        // Reset the game to initial state
+        function resetGame() {
+            board = JSON.parse(JSON.stringify(initialBoard));
+            selectedPiece = null;
+            possibleMoves = [];
+            turn = 'w';
+            gameState = 'playing';
+            capturedPieces = { w: [], b: [] };
+            moveHistory = [];
+            lastMove = null;
+            
+            gameOverDiv.style.display = 'none';
+            updateBoardUI();
+        }
+
+        // Show game over overlay
+        function showGameOver() {
+            if (gameState === 'checkmate') {
+                gameOverTitle.textContent = 'Checkmate!';
+                gameOverMessage.textContent = `${turn === 'b' ? 'White' : 'Black'} wins!`;
+                gameOverMessage.style.color = `hsl(${turn === 'b' ? 60 : 240}, 100%, 80%)`;
+            } else {
+                gameOverTitle.textContent = 'Stalemate!';
+                gameOverMessage.textContent = 'Game ends in a draw.';
+                gameOverMessage.style.color = 'hsl(60, 100%, 80%)';
+            }
+            
+            const gameOverModal = document.getElementById('game-over-modal');
+            gameOverModal.style.background = `radial-gradient(circle, 
+                hsl(${hueRotation}, 60%, 20%),
+                hsl(${(hueRotation + 180) % 360}, 60%, 10%)
+            )`;
+            gameOverModal.style.border = `4px solid hsl(${hueRotation}, 100%, 50%)`;
+            gameOverModal.style.boxShadow = `
+                0 0 20px hsl(${hueRotation}, 100%, 50%),
+                0 0 40px hsl(${(hueRotation + 60) % 360}, 100%, 50%),
+                0 0 60px hsl(${(hueRotation + 120) % 360}, 100%, 50%)
+            `;
+            
+            gameOverTitle.style.textShadow = `
+                0 0 10px hsl(${hueRotation}, 100%, 70%),
+                0 0 20px hsl(${(hueRotation + 120) % 360}, 100%, 70%)
+            `;
+            
+            const playAgainButton = document.getElementById('play-again');
+            playAgainButton.style.background = `linear-gradient(45deg, 
+                hsl(${hueRotation}, 100%, 50%), 
+                hsl(${(hueRotation + 120) % 360}, 100%, 50%), 
+                hsl(${(hueRotation + 240) % 360}, 100%, 50%),
+                hsl(${hueRotation}, 100%, 50%)
+            )`;
+            playAgainButton.style.backgroundSize = '300% 300%';
+            playAgainButton.style.animation = 'gradient-shift 2s linear infinite';
+            playAgainButton.style.boxShadow = `0 0 15px hsl(${hueRotation}, 100%, 50%)`;
+            
+            gameOverDiv.style.display = 'flex';
+        }
+
+        // Get cell background color with psychedelic effects
+        function getCellColor(row, col, isSelected, isPossibleMove, isLastMoveFrom, isLastMoveTo) {
+            const isLightSquare = (row + col) % 2 === 0;
+            const baseHue = (hueRotation + (isLightSquare ? 30 : 0)) % 360;
+            const baseSaturation = isLightSquare ? 20 : 40;
+            const baseLightness = isLightSquare ? 80 : 50;
+            
+            // Add warping effect
+            const time = Date.now() * 0.001;
+            const warpFactor = tripLevel / 200; // More subtle at lower trip levels
+            const warp = Math.sin(row + col + time) * warpFactor;
+            
+            let cellColor;
+            
+            if (isSelected) {
+                cellColor = `hsl(${(baseHue + 120) % 360}, ${baseSaturation + 40}%, ${baseLightness + 10}%)`;
+            } else if (isPossibleMove) {
+                const captureBoost = board[row][col] ? 40 : 0;
+                cellColor = `hsl(${(baseHue + 60) % 360}, ${baseSaturation + 60}%, ${baseLightness + captureBoost}%)`;
+            } else if (isLastMoveFrom) {
+                cellColor = `hsl(${(baseHue + 200) % 360}, ${baseSaturation + 20}%, ${baseLightness - 10}%)`;
+            } else if (isLastMoveTo) {
+                cellColor = `hsl(${(baseHue + 200) % 360}, ${baseSaturation + 30}%, ${baseLightness}%)`;
+            } else {
+                cellColor = `hsl(${baseHue}, ${baseSaturation + warp * 20}%, ${baseLightness + warp * 10}%)`;
+            }
+            
+            return cellColor;
+        }
+
+        // Get piece style with trippy effects
+        function getPieceStyle(row, col, isSelected) {
+            const time = Date.now() * 0.001;
+            const intensity = tripLevel / 100;
+            
+            // Base scale effect
+            let scale = isSelected ? 1.3 : 1;
+            
+            // Add pulsing
+            scale += Math.sin(time * 2 + row + col) * 0.1 * intensity;
+            
+            // Add piece distortion based on trip level
+            const blurAmount = tripLevel > 70 ? (tripLevel - 70) / 30 * 3 : 0;
+            
+            // Glow effect on selected pieces
+            const shadowColor = `hsl(${(hueRotation + row * 20 + col * 30) % 360}, 100%, 70%)`;
+            const shadow = isSelected ? `0 0 20px ${shadowColor}` : 'none';
+            
+            return {
+                transform: `scale(${scale})`,
+                filter: `blur(${blurAmount}px) hue-rotate(${row * 10 + col * 10}deg)`,
+                textShadow: shadow
+            };
+        }
+
+        // Get board glow style
+        function getBoardGlowStyle() {
+            const intensity = tripLevel / 100;
+            const size = 20 + pulseEffect * 30;
+            
+            return {
+                boxShadow: `
+                    0 0 ${size}px 0 rgba(255, 0, 0, ${0.3 * intensity}),
+                    0 0 ${size * 2}px 0 rgba(0, 255, 0, ${0.2 * intensity}),
+                    0 0 ${size * 3}px 0 rgba(0, 0, 255, ${0.1 * intensity})
+                `,
+                filter: `hue-rotate(${hueRotation}deg)`
+            };
+        }
+
+        // Toggle auto-play mode
+        function toggleAutoPlay() {
+            autoPlay = !autoPlay;
+            autoPlayButton.textContent = autoPlay ? 'ON' : 'OFF';
+            autoPlayButton.style.backgroundColor = autoPlay ? '#2d862d' : '#b32d2d';
+            
+            // Update button text
+            toggleAutoplayButton.textContent = autoPlay ? 'Stop Auto-Play' : 'Start Auto-Play';
+            
+            // If turning on auto-play and it's currently white's turn, make a move
+            if (autoPlay && turn === 'w' && gameState === 'playing') {
+                aiThinking = true;
+                updateBoardUI();
+                
+                setTimeout(() => {
+                    makeAIMove('w');
+                    aiThinking = false;
+                    updateBoardUI();
+                }, moveDelay);
+            }
+        }
+
+        // Toggle show/hide controls
+        function toggleControls() {
+            showControls = !showControls;
+            controlsDiv.style.display = showControls ? 'flex' : 'none';
+            showControlsButton.style.display = showControls ? 'none' : 'block';
+        }
+
+        // Event listeners
+        resetButton.addEventListener('click', resetGame);
+        toggleAutoplayButton.addEventListener('click', toggleAutoPlay);
+        playAgainButton.addEventListener('click', resetGame);
+        hideControlsButton.addEventListener('click', toggleControls);
+        showControlsButton.addEventListener('click', toggleControls);
+        
+        difficultySelect.addEventListener('change', (e) => {
+            difficulty = e.target.value;
+        });
+        
+        tripLevelInput.addEventListener('input', (e) => {
+            tripLevel = parseInt(e.target.value);
+        });
+        
+        moveDelaySelect.addEventListener('change', (e) => {
+            moveDelay = parseInt(e.target.value);
+        });
+        
+        autoPlayButton.addEventListener('click', toggleAutoPlay);
+
+        // Initialize and start animations
+        initializeBoard();
+        startBackgroundAnimation();
+        startTrailsAnimation();
+        startColorCycling();
     </script>
-  </body>
+</body>
 </html>
